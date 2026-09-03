@@ -9,6 +9,6 @@ internal object CodexOAuthConfig {
     const val DEVICE_REDIRECT_URI = "$ISSUER_URL/deviceauth/callback"
     const val SCOPE = "openid profile email offline_access"
 
-    // Source: docs/ARCHITECTURE.md 11.2 and docs/SPEC.md 9.3 define this Codex OAuth client id.
+    // Public Codex client id used by the device-code authorization flow.
     const val CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
 }
