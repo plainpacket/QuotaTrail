@@ -33,7 +33,7 @@ class CurrentQuotaRefreshAccountStoreTest {
     }
 
     @Test
-    fun `active accounts span every provider and skip reauth disabled deleted`() = runTest {
+    fun `active accounts include only enabled providers and skip reauth disabled deleted`() = runTest {
         withStore { db, store ->
             db.providerAccountDao().upsert(account("local-active", "codex", "active"))
             db.providerAccountDao().upsert(account("local-reauth", "codex", "needs_reauth"))
@@ -44,9 +44,9 @@ class CurrentQuotaRefreshAccountStoreTest {
 
             val accounts = store.activeAccounts()
 
-            // Background refresh covers every provider's Active accounts, not just Codex.
+            // Background refresh covers active accounts for the two enabled providers.
             assertEquals(
-                setOf("local-active", "local-deepseek", "local-claude"),
+                setOf("local-active", "local-claude"),
                 accounts.map { it.localAccountId.value }.toSet(),
             )
         }

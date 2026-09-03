@@ -5,11 +5,14 @@ import app.quotatrail.storage.preferences.CurrentAccountReader
 import app.quotatrail.storage.repository.toDomain
 import app.quotatrail.domain.model.AccountStatus
 import app.quotatrail.domain.model.ProviderAccount
+import app.quotatrail.providers.ProviderRegistry
 
 internal class CurrentQuotaRefreshAccountStore(
     private val currentAccountReader: CurrentAccountReader,
     private val providerAccountDao: ProviderAccountDao,
 ) {
+    private val enabledProviderIds = ProviderRegistry.all.mapTo(mutableSetOf()) { it.providerId }
+
     /**
      * The currently-selected account when it is eligible for a user-initiated refresh (Active or
      * NeedsReauth). Returning a NeedsReauth account lets manual pull-to-refresh on Home retry it; a
@@ -25,14 +28,13 @@ internal class CurrentQuotaRefreshAccountStore(
     }
 
     /**
-     * Every Active account across ALL providers — background refresh must keep each connected
-     * provider fresh, not only Codex. (Previously filtered to a single hard-coded Codex id, which is
-     * why non-Codex accounts only refreshed when manually selected as current.)
+     * Every Active account for an enabled provider. QuotaTrail currently exposes Claude and Codex;
+     * legacy accounts for disabled providers are ignored.
      */
     suspend fun activeAccounts(): List<ProviderAccount> =
         providerAccountDao.listAll()
             .map { it.toDomain() }
-            .filter { it.status == AccountStatus.Active }
+            .filter { it.providerId in enabledProviderIds && it.status == AccountStatus.Active }
 
     /**
      * Accounts a user-initiated refresh may attempt: Active plus NeedsReauth. Including NeedsReauth
@@ -43,7 +45,7 @@ internal class CurrentQuotaRefreshAccountStore(
     suspend fun manuallyRefreshableAccounts(): List<ProviderAccount> =
         providerAccountDao.listAll()
             .map { it.toDomain() }
-            .filter { it.status.isManuallyRefreshable() }
+            .filter { it.providerId in enabledProviderIds && it.status.isManuallyRefreshable() }
 }
 
 private fun AccountStatus.isManuallyRefreshable(): Boolean =
