@@ -67,6 +67,7 @@ Requirements: Android Studio with SDK 37, JDK 17, and an Android 12+ device or e
 - `app/src/main/java/app/quotatrail/storage` — Room, DataStore, and encrypted session storage
 - `app/src/main/java/app/quotatrail/presentation` — Compose Material 3 screens and state rendering
 - `app/src/main/java/app/quotatrail/surfaces` — notification and Jetpack Glance widget surfaces
+- `docs/PERSONAL_SECURITY_BUILD.md` — optional least-privilege build and release checklist
 - `CONTRIBUTING.md` — contributor safety and verification rules
 
 ## Origin and attribution

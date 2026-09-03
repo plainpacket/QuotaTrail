@@ -3,8 +3,7 @@
 ## Purpose and provenance
 
 This repository is a least-privilege Android build for viewing only Claude and Codex quota
-usage. It is derived from QuotaTrail `v0.1.5` at commit
-`e0c42ff651b7f50813109c4be6b9708cd18c395c`. It is not an official OpenAI or Anthropic app and has
+usage. It is derived from the current QuotaTrail main branch. It is not an official OpenAI or Anthropic app and has
 not received an independent professional security audit.
 
 The package ID is `app.quotatrail.safe`, the visible name is `QuotaTrail`, and upstream
