@@ -901,8 +901,8 @@ class SettingsViewModelTest {
     private fun appUpdateInfo(): AppUpdateInfo =
         AppUpdateInfo(
             versionName = "v0.2.0",
-            releasePageUrl = "https://github.com/KyoMio/QuotaTrail/releases/tag/v0.2.0",
-            apkDownloadUrl = "https://github.com/KyoMio/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk",
+            releasePageUrl = "https://github.com/plainpacket/QuotaTrail/releases/tag/v0.2.0",
+            apkDownloadUrl = "https://github.com/plainpacket/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk",
             apkFileName = "QuotaTrail-0.2.0.apk",
         )
 

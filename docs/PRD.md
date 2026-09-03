@@ -2,9 +2,9 @@
 
 ## 1. 基本信息
 
-- 项目目录：`codexbar-apk`
+- 项目目录：`QuotaTrail`
 - 产品展示名：`QuotaTrail`
-- 中文称呼：`Codex 用量仪`
+- 产品称呼：`QuotaTrail`
 - 目标平台：Android 12+
 - 分发方式：自用 / 小范围侧载 APK
 - 文档状态：MVP PRD 初稿
@@ -390,7 +390,7 @@ MVP 做一个可调整大小并自适应布局的桌面微件，按可用尺寸�
 3×2 / 4×2 网格布局（3 / 4 字段）：
 
 - 头部行显示 Provider 品牌图标、账号名与状态，下方按 2 列网格展示 3 或 4 个字段。
-- 字段内容与上一致；完整布局细节见 `DESIGN.md`。
+- 字段内容与上一致；布局由 Compose Material 3 共享 surface 组件定义。
 
 第二行规则：
 
@@ -645,7 +645,7 @@ MVP 使用省电后台刷新策略。
 
 - 提供外观切换卡片：浅色 / 深色 / 跟随系统三选一（默认跟随系统），独立持久化、立即生效；仅作用于 App，桌面微件始终跟随系统深浅色。
 - 不提供全局主额度选择；首页显示 Provider 实际返回的可展示额度窗口。
-- 字体方案固定为 Mono Focus，不提供 App 内字体方案配置入口。
+- Typography is fixed by the app theme; no in-app font picker is provided.
 - App 内不提供语言切换入口；所有系统语言均显示英文。
 
 ### 15.3 刷新

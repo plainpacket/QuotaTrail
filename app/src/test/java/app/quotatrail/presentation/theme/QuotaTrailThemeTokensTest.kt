@@ -69,7 +69,8 @@ class QuotaTrailThemeTokensTest {
 
     @Test
     fun `field instrument typography keeps implementation-safe letter spacing`() {
-        // Token names, sizes, and weights follow DESIGN.md; app-level UI guardrails keep letter spacing at 0.sp.
+        // Token names, sizes, and weights are part of the app theme contract; app-level UI
+        // guardrails keep letter spacing at 0.sp.
         assertEquals(0.sp, QuotaTrailTypography.display.letterSpacing)
         assertEquals(0.sp, QuotaTrailTypography.title.letterSpacing)
         assertEquals(0.sp, QuotaTrailTypography.body.letterSpacing)

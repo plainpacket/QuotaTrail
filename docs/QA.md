@@ -10,8 +10,8 @@ Current UI expectations:
 
 - Home no-account state shows `QuotaTrail`, `连接 Codex` / `Connect Codex`, and `登录 Codex` / `Log in to Codex`; it does not show an `auth.json` import action.
 - Add Account exposes only the Codex device-code sign-in flow, with code display, copy, external verification-page open, cancellation and validation retry.
-- Home signed-in state shows the current-account glass summary, 5h quota, weekly quota, rounded hourly trend bars and refresh status.
-- Account tab is the only account-management surface: add, set current, rename, relogin, delete, and per-account quota alert switches.
+- Home signed-in state shows the selected-account summary, 5h quota, weekly quota, hourly trend lines and refresh status.
+- Account tab is the account-management surface: add, rename, relogin, delete, and per-account quota alert switches.
 - Settings groups are persistent notification, alerts, refresh, data, diagnostics and about; there is no account-management card, display group, language picker, font picker, primary-window picker, or refresh-card `Check now` action.
 - Widget defaults to current account + 5h unless a specific widget configuration overrides account or compact primary quota window.
 
@@ -20,7 +20,6 @@ Recommended automated gates for current changes:
 - `./gradlew assembleDebug`
 - `./gradlew test`
 - `./gradlew :app:testDebugUnitTest`
-- `npx -y @google/design.md lint DESIGN.md`
 - `git diff --check`
 - `git status --short`
 

@@ -4,11 +4,11 @@
 
 本文是 `QuotaTrail` MVP 的可执行开发蓝图，用于固化 Android 架构、数据模型、认证链路、刷新链路、安全边界和后续扩展约束。
 
-本文不展开完整代码实现，不描述 UI 视觉细节。视觉与交互细节放在根目录 `DESIGN.md`，开发规范放在根目录 `RULES.md`。
+本文不展开完整代码实现，不描述 UI 视觉细节。UI 视觉与交互由 Compose Material 3 主题和共享 surface 组件定义。
 
 ## 2. 已确认产品边界
 
-- 项目目录：`codexbar-apk`
+- 项目目录：`QuotaTrail`
 - 产品展示名：`QuotaTrail`
 - 正式包名：`app.quotatrail`
 - debug 包名：`app.quotatrail.debug`
@@ -414,7 +414,7 @@ QuotaTrail 将本地数据分为三类。
 - 状态通知开关
 - 外观主题偏好：浅色 / 深色 / 跟随系统，持久化在独立 DataStore 文件 `appearance.preferences_pb`，与账号数据解耦；启动时同步预热首值（`runBlocking { first() }`）以避免首帧主题闪烁
 
-历史版本残留的语言 / 字体偏好不再驱动当前 UI：App 启动时清理平台 App 专属语言覆盖，字体方案固定为 Mono Focus；明暗主题由外观偏好驱动，仅作用于 App（桌面微件始终跟随系统深浅色）。
+历史版本残留的语言 / 字体偏好不再驱动当前 UI：App 启动时清理平台 App 专属语言覆盖；字体由 Compose 主题固定，明暗主题由外观偏好驱动，仅作用于 App（桌面微件始终跟随系统深浅色）。
 
 ### 8.4 应用更新检查
 

@@ -43,8 +43,8 @@ import app.quotatrail.presentation.theme.QuotaTrailTypography
 
 /**
  * Lists every registered provider and lets the user pick one to add an account. On selection the
- * caller branches on the provider's auth type. Styled per DESIGN.md (Air Glass backdrop, restrained
- * surface cards, brand-icon tiles) and fully resource-backed for zh-rCN + en.
+ * caller branches on the provider's auth type. Uses the shared Material 3 theme and provider
+ * surfaces, with restrained cards and brand-icon tiles.
  */
 @Composable
 fun ProviderSelectionScreen(

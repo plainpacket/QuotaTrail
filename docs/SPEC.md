@@ -1,6 +1,6 @@
 # QuotaTrail MVP Implementation Spec
 
-> **For Hermes / coding agents:** read `AGENTS.md` first. Implement this spec task-by-task with strict TDD for production logic. Do not start production code for a behavior until a failing test for that behavior exists.
+> **For contributors:** use this document as historical implementation context. Keep production behavior and tests as the final source of truth.
 
 **Goal:** build the first Android MVP of `QuotaTrail`, a self-use / small-scale sideloaded Android 12+ app for monitoring official Codex quota usage.
 
@@ -16,24 +16,21 @@
 
 Read in this order before implementation:
 
-1. `AGENTS.md`
-2. `docs/PRD.md`
-3. `docs/ARCHITECTURE.md`
-4. `docs/CODEX_DEVICE_CODE_LOGIN_SPEC.md` when touching Codex login, OAuth session, account connection, auth notifications or `auth.json` migration.
-5. `docs/SPEC.md`
-6. `RULES.md`
-7. `DESIGN.md` when touching UI, Widget, notification or UX
+1. `docs/PRD.md`
+2. `docs/ARCHITECTURE.md`
+3. `docs/CODEX_DEVICE_CODE_LOGIN_SPEC.md` when touching Codex login, OAuth session, account connection, auth notifications or `auth.json` migration.
+4. `docs/SPEC.md`
 
 If this spec conflicts with PRD, architecture, rules or design, stop and patch the documents or ask for a decision. Do not silently choose the convenient interpretation.
 
 Codex login migration note: `docs/CODEX_DEVICE_CODE_LOGIN_SPEC.md` supersedes older MVP statements that describe `auth.json` as a user-facing fallback or embedded WebView auth. New account connection must use the Hermes-aligned device-code external-browser flow. Existing saved OAuth sessions, including sessions originally imported from `auth.json`, remain valid and must not be deleted automatically.
 
-This file defines the implementation contract and work order. It does not replace:
+This file records implementation context and work order. It does not replace:
 
 - `docs/PRD.md` for product scope.
 - `docs/ARCHITECTURE.md` for system boundaries and data flow.
-- `RULES.md` for maintainability and code quality.
-- `DESIGN.md` for UI / Widget / Notification appearance.
+- `CONTRIBUTING.md` for maintainability, safety, and code quality.
+- The Compose Material 3 theme and shared surfaces for UI / Widget / Notification appearance.
 
 ---
 
@@ -54,7 +51,7 @@ The MVP must support:
 - Swipeable Home dashboard with one page per saved Claude/Codex account, provider-reported quota windows, 72h 7-day-remaining trend, freshness and refresh state.
 - Account tab with add account, rename, re-login and delete; it does not contain a separate current-account card or `Set current` action.
 - Settings tab with persistent notification configuration, thresholds, refresh, account-error notifications, retention, data management, diagnostics, and manual GitHub Releases APK update checks.
-- Settings tab includes an appearance preference (Light / Dark / Follow System, default Follow System) that persists independently of accounts and applies immediately to the app. The home-screen widget ALWAYS follows the system theme (independent of the app preference): its glass background is a `drawable`/`drawable-night` resource and its text uses Glance `ColorProvider(day, night)`, so the launcher re-resolves them instantly on a system night-mode change with no app process involvement.
+- Settings tab includes an appearance preference (Light / Dark / Follow System, default Follow System) that persists independently of accounts and applies immediately to the app. The home-screen widget always follows the system theme independently of the app preference.
 - Resizable home-screen widget driven by persisted widget state, with optional per-widget account and compact primary-window configuration.
 - Optional persistent status notification.
 - Threshold behavior uses remaining quota percent: 30/10/0 defaults; 30% only changes state color/copy; 10% and 0% may notify.
@@ -293,7 +290,7 @@ Rules:
 
 - `displayName` must be editable by user.
 - Default display name must not include token, email from unverified sources, or raw ID token payload.
-- Avatar is circular solid color + first display character, per `DESIGN.md`.
+- Avatar is circular solid color + first display character, per the shared Compose surface components.
 
 ### 6.3 Quota snapshot
 
@@ -927,7 +924,7 @@ Required visible content when authenticated:
 - Every displayable quota window returned for that account; absent provider windows are not synthesized.
 - 72h compact line chart for the overall 7-day limit's remaining percentage.
 - Refresh status and manual refresh action.
-- Widget preview / widget hint per `DESIGN.md`.
+- Widget preview / widget hint follows the shared Material 3 surface components.
 
 Rules:
 
@@ -1294,7 +1291,6 @@ Baseline commands:
 ./gradlew assembleDebug
 ./gradlew test
 ./gradlew :app:testDebugUnitTest
-npx -y @google/design.md lint DESIGN.md
 ```
 
 If instrumentation is configured and a device/emulator is available:
@@ -1405,10 +1401,10 @@ git commit -m "feat: add quota state and alerts"
 Acceptance:
 
 - Home / Account / Settings bottom tabs exist in confirmed order.
-- UI follows the `DESIGN.md` Route Dashboard direction.
+- UI follows the shared Compose Material 3 theme and quota surfaces.
 - Unauthenticated, fresh, stale, auth required and error states render.
 - Account add/device-code-login/switch/rename/delete flows are wired to ViewModels.
-- Strings are available in Chinese and English.
+- All user-facing strings are English.
 
 Commit:
 
@@ -1480,7 +1476,6 @@ MVP implementation is done only when:
 - All user-facing strings resolve to English in every locale; there is no in-app language selector.
 - `./gradlew assembleDebug` passes.
 - `./gradlew test` or `./gradlew :app:testDebugUnitTest` passes.
-- `npx -y @google/design.md lint DESIGN.md` passes.
 - Git status is clean after final commit.
 ## Personal security distribution requirements
 

@@ -17,6 +17,6 @@ class SettingsRepositoryLinkTargetTest {
         val intent = SettingsRepositoryLinkTarget.openIntent()
 
         assertEquals(Intent.ACTION_VIEW, intent.action)
-        assertEquals(Uri.parse("https://github.com/KyoMio/QuotaTrail"), intent.data)
+        assertEquals(Uri.parse("https://github.com/plainpacket/QuotaTrail"), intent.data)
     }
 }

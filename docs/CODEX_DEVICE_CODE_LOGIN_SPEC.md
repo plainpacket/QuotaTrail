@@ -14,7 +14,7 @@
 - 通知正文点击打开同一个外部 verification 页面；通知操作按钮负责复制 device code。
 - 授权成功后，登录通知短暂更新为账号连接成功，再由常驻额度通知接管。
 
-本文是 Codex 登录实现规格；`docs/SPEC.md`、`docs/PRD.md`、`docs/ARCHITECTURE.md`、`RULES.md`、`DESIGN.md` 与本文保持同步。
+本文是 Codex 登录实现规格；`docs/SPEC.md`、`docs/PRD.md` 与 `docs/ARCHITECTURE.md` 应与实现保持同步。
 
 ## 2. 已确认决策
 

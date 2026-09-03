@@ -34,11 +34,11 @@ class GitHubReleaseAppUpdateCheckerTest {
                     """
                     {
                       "tag_name": "v0.2.0",
-                      "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/v0.2.0",
+                      "html_url": "https://github.com/plainpacket/QuotaTrail/releases/tag/v0.2.0",
                       "assets": [
                         {
                           "name": "QuotaTrail-0.2.0.apk",
-                          "browser_download_url": "https://github.com/KyoMio/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk"
+                          "browser_download_url": "https://github.com/plainpacket/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk"
                         },
                         {
                           "name": "source.zip",
@@ -59,10 +59,10 @@ class GitHubReleaseAppUpdateCheckerTest {
         assertEquals("v0.2.0", update.versionName)
         assertEquals("QuotaTrail-0.2.0.apk", update.apkFileName)
         assertEquals(
-            "https://github.com/KyoMio/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk",
+            "https://github.com/plainpacket/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk",
             update.apkDownloadUrl,
         )
-        assertEquals("/repos/KyoMio/QuotaTrail/releases/latest", server.takeRequest().url.encodedPath)
+        assertEquals("/repos/plainpacket/QuotaTrail/releases/latest", server.takeRequest().url.encodedPath)
     }
 
     @Test
@@ -84,7 +84,7 @@ class GitHubReleaseAppUpdateCheckerTest {
                     """
                     {
                       "tag_name": "v0.2.0",
-                      "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/v0.2.0",
+                      "html_url": "https://github.com/plainpacket/QuotaTrail/releases/tag/v0.2.0",
                       "assets": [
                         {
                           "name": "QuotaTrail-0.2.0.zip",
@@ -122,7 +122,7 @@ class GitHubReleaseAppUpdateCheckerTest {
                     """
                     {
                       "tag_name": "v0.2.0",
-                      "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/v0.2.0",
+                      "html_url": "https://github.com/plainpacket/QuotaTrail/releases/tag/v0.2.0",
                       "body": "## Changes\n- new stuff",
                       "assets": [
                         {
@@ -155,7 +155,7 @@ class GitHubReleaseAppUpdateCheckerTest {
     private fun newChecker(): GitHubReleaseAppUpdateChecker =
         GitHubReleaseAppUpdateChecker(
             httpClient = ProviderHttpClient(),
-            latestReleaseApiUrl = server.url("/repos/KyoMio/QuotaTrail/releases/latest").toString(),
+            latestReleaseApiUrl = server.url("/repos/plainpacket/QuotaTrail/releases/latest").toString(),
         )
 
     private fun latestReleaseResponse(tagName: String): MockResponse =
@@ -165,11 +165,11 @@ class GitHubReleaseAppUpdateCheckerTest {
                 """
                 {
                   "tag_name": "$tagName",
-                  "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/$tagName",
+                  "html_url": "https://github.com/plainpacket/QuotaTrail/releases/tag/$tagName",
                   "assets": [
                     {
                       "name": "QuotaTrail-$tagName.apk",
-                      "browser_download_url": "https://github.com/KyoMio/QuotaTrail/releases/download/$tagName/QuotaTrail.apk"
+                      "browser_download_url": "https://github.com/plainpacket/QuotaTrail/releases/download/$tagName/QuotaTrail.apk"
                     }
                   ]
                 }

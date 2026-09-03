@@ -11,11 +11,11 @@ class SettingsHiddenEntryPolicyTest {
         val settingsCards = sourceFile("src/main/java/app/quotatrail/presentation/settings/SettingsCards.kt").readText()
 
         assertFalse(
-            "Font scheme is fixed to Mono Focus; Settings must not expose a font scheme choice dialog.",
+            "Typography is fixed by the app theme; Settings must not expose a font scheme choice dialog.",
             settingsScreen.contains("SettingsChoiceDialog.FontScheme"),
         )
         assertFalse(
-            "Font scheme is fixed to Mono Focus; DisplayCard must not show a font scheme row.",
+            "Typography is fixed by the app theme; DisplayCard must not show a font scheme row.",
             settingsCards.contains("settings_font_scheme_title"),
         )
     }

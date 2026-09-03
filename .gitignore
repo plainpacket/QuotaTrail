@@ -110,6 +110,7 @@ docs/design/
 sketches/
 spikes/
 design-references/**/*.pdf
+DESIGN.md
 
 # Tooling / agent local state (machine-specific, never shared)
 .codegraph/
