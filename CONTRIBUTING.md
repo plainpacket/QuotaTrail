@@ -1,7 +1,7 @@
 # Contributing to QuotaTrail
 
-QuotaTrail is a single-module Android app built with Kotlin, Jetpack Compose, Material 3, Room,
-DataStore, WorkManager, and Jetpack Glance. The public repository is a fork of
+QuotaTrail is a single-module Android app built with Kotlin, Room, DataStore, WorkManager, and
+Jetpack Glance. The public repository is a fork of
 [KyoMio/CodexMeter](https://github.com/KyoMio/CodexMeter), substantially reworked under the
 `app.quotatrail` namespace.
 
@@ -12,8 +12,7 @@ DataStore, WorkManager, and Jetpack Glance. The public repository is a fork of
 - Keep UI state in ViewModels and StateFlow; Composables render state and emit events.
 - Route refresh work through the shared synchronization coordinator so the app, widget, and
   notification do not implement separate quota logic.
-- Follow the Material 3 visual language already expressed by the Compose theme and shared surfaces,
-  including its English-only copy, semantic colors, and accessibility targets.
+- Keep the two-provider scope explicit: Claude and Codex are the only providers exposed by the app.
 
 ## Local verification
 
