@@ -1,0 +1,179 @@
+package app.quotatrail.storage.repository
+
+import app.quotatrail.foundation.network.ProviderHttpClient
+import app.quotatrail.domain.update.AppUpdateCheckResult
+import kotlinx.coroutines.test.runTest
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
+class GitHubReleaseAppUpdateCheckerTest {
+    private val server = MockWebServer()
+
+    @Before
+    fun setUp() {
+        server.start()
+    }
+
+    @After
+    fun tearDown() {
+        server.close()
+    }
+
+    @Test
+    fun `newer latest release with apk asset returns update`() = runTest {
+        server.enqueue(
+            MockResponse.Builder()
+                .code(200)
+                .body(
+                    """
+                    {
+                      "tag_name": "v0.2.0",
+                      "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/v0.2.0",
+                      "assets": [
+                        {
+                          "name": "QuotaTrail-0.2.0.apk",
+                          "browser_download_url": "https://github.com/KyoMio/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk"
+                        },
+                        {
+                          "name": "source.zip",
+                          "browser_download_url": "https://example.test/source.zip"
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                )
+                .build(),
+        )
+        val checker = newChecker()
+
+        val result = checker.checkForUpdate(currentVersionName = "0.1.0-debug")
+
+        assertTrue(result is AppUpdateCheckResult.UpdateAvailable)
+        val update = (result as AppUpdateCheckResult.UpdateAvailable).update
+        assertEquals("v0.2.0", update.versionName)
+        assertEquals("QuotaTrail-0.2.0.apk", update.apkFileName)
+        assertEquals(
+            "https://github.com/KyoMio/QuotaTrail/releases/download/v0.2.0/QuotaTrail-0.2.0.apk",
+            update.apkDownloadUrl,
+        )
+        assertEquals("/repos/KyoMio/QuotaTrail/releases/latest", server.takeRequest().url.encodedPath)
+    }
+
+    @Test
+    fun `same latest release is up to date`() = runTest {
+        server.enqueue(latestReleaseResponse(tagName = "v0.1.0"))
+        val checker = newChecker()
+
+        val result = checker.checkForUpdate(currentVersionName = "0.1.0-debug")
+
+        assertEquals(AppUpdateCheckResult.UpToDate, result)
+    }
+
+    @Test
+    fun `latest release without apk asset is reported separately`() = runTest {
+        server.enqueue(
+            MockResponse.Builder()
+                .code(200)
+                .body(
+                    """
+                    {
+                      "tag_name": "v0.2.0",
+                      "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/v0.2.0",
+                      "assets": [
+                        {
+                          "name": "QuotaTrail-0.2.0.zip",
+                          "browser_download_url": "https://example.test/QuotaTrail-0.2.0.zip"
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                )
+                .build(),
+        )
+        val checker = newChecker()
+
+        val result = checker.checkForUpdate(currentVersionName = "0.1.0")
+
+        assertEquals(AppUpdateCheckResult.NoApkAsset, result)
+    }
+
+    @Test
+    fun `github latest release 404 is no release`() = runTest {
+        server.enqueue(MockResponse.Builder().code(404).body("{} ").build())
+        val checker = newChecker()
+
+        val result = checker.checkForUpdate(currentVersionName = "0.1.0")
+
+        assertEquals(AppUpdateCheckResult.NoRelease, result)
+    }
+
+    @Test
+    fun `maps release body to release notes`() = runTest {
+        server.enqueue(
+            MockResponse.Builder()
+                .code(200)
+                .body(
+                    """
+                    {
+                      "tag_name": "v0.2.0",
+                      "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/v0.2.0",
+                      "body": "## Changes\n- new stuff",
+                      "assets": [
+                        {
+                          "name": "QuotaTrail-0.2.0.apk",
+                          "browser_download_url": "https://example.test/app.apk"
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                )
+                .build(),
+        )
+
+        val result = newChecker().checkForUpdate(currentVersionName = "0.1.0")
+
+        val update = (result as AppUpdateCheckResult.UpdateAvailable).update
+        assertEquals("## Changes\n- new stuff", update.releaseNotes)
+    }
+
+    @Test
+    fun `missing release body yields null notes`() = runTest {
+        server.enqueue(latestReleaseResponse(tagName = "v0.2.0"))
+
+        val result = newChecker().checkForUpdate(currentVersionName = "0.1.0")
+
+        val update = (result as AppUpdateCheckResult.UpdateAvailable).update
+        assertNull(update.releaseNotes)
+    }
+
+    private fun newChecker(): GitHubReleaseAppUpdateChecker =
+        GitHubReleaseAppUpdateChecker(
+            httpClient = ProviderHttpClient(),
+            latestReleaseApiUrl = server.url("/repos/KyoMio/QuotaTrail/releases/latest").toString(),
+        )
+
+    private fun latestReleaseResponse(tagName: String): MockResponse =
+        MockResponse.Builder()
+            .code(200)
+            .body(
+                """
+                {
+                  "tag_name": "$tagName",
+                  "html_url": "https://github.com/KyoMio/QuotaTrail/releases/tag/$tagName",
+                  "assets": [
+                    {
+                      "name": "QuotaTrail-$tagName.apk",
+                      "browser_download_url": "https://github.com/KyoMio/QuotaTrail/releases/download/$tagName/QuotaTrail.apk"
+                    }
+                  ]
+                }
+                """.trimIndent(),
+            )
+            .build()
+}

@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     alias(libs.plugins.android.application)
@@ -6,6 +7,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+val robolectricSdk by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 
 // App version is derived from the latest git tag (e.g. `v0.1.1`), never hardcoded.
 // versionName = tag without the leading `v`; versionCode is packed from the semver
@@ -33,12 +39,12 @@ val appVersionCode = appVersionName.substringBefore("-").split(".").let { parts 
 }.coerceAtLeast(1)
 
 android {
-    namespace = "com.kmnexus.codexmeter"
+    namespace = "app.quotatrail"
     compileSdk = 37
     buildToolsVersion = "37.0.0"
 
     defaultConfig {
-        applicationId = "com.kmnexus.codexmeter"
+        applicationId = "app.quotatrail"
         minSdk = 31
         targetSdk = 36
         versionCode = appVersionCode
@@ -81,7 +87,7 @@ android {
                 keyPassword   = envKeyPassword
             } else {
                 val keystoreProps = Properties().also { props ->
-                    val propsFile = file("${System.getProperty("user.home")}/.android/codexmeter-release-keystore.properties")
+                    val propsFile = file("${System.getProperty("user.home")}/.android/quotatrail-release-keystore.properties")
                     if (propsFile.exists()) props.load(propsFile.inputStream())
                 }
                 storeFile     = keystoreProps.getProperty("storeFile")?.let { file(it) }
@@ -124,6 +130,19 @@ android {
     }
 }
 
+// Robolectric otherwise downloads this SDK at test time. Resolve it through an isolated Gradle
+// configuration so plain JVM tests do not accidentally see Android framework classes.
+tasks.withType<Test>().configureEach {
+    doFirst {
+        val dependencyDirectory = robolectricSdk.singleFile.parentFile
+        val sandboxHome = layout.buildDirectory.dir("test-home").get().asFile.apply { mkdirs() }
+        val sandboxTemp = layout.buildDirectory.dir("test-tmp").get().asFile.apply { mkdirs() }
+        systemProperty("robolectric.dependency.dir", dependencyDirectory.absolutePath)
+        systemProperty("user.home", sandboxHome.absolutePath)
+        systemProperty("java.io.tmpdir", sandboxTemp.absolutePath)
+    }
+}
+
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
@@ -147,7 +166,6 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.qm.liquidglass.core)
     implementation("androidx.browser:browser:1.8.0")
 
     debugImplementation(libs.compose.ui.tooling)
@@ -156,6 +174,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver)
     testImplementation(libs.robolectric)
+    robolectricSdk("org.robolectric:android-all-instrumented:15-robolectric-13954326-i7")
     testImplementation(libs.turbine)
 
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

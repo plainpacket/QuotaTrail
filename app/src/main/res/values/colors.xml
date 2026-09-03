@@ -1,8 +1,9 @@
 <resources>
-    <color name="codexmeter_primary">#17181C</color>
-    <color name="codexmeter_surface">#FFFFFF</color>
-    <color name="codexmeter_background">#F5F7FB</color>
-    <color name="codexmeter_accent">#0071E3</color>
-    <color name="codexmeter_background_dark">#0E1218</color>
-    <color name="ic_launcher_background">#F5F7FB</color>
+    <color name="quotatrail_widget_loading_text">#1A1C1E</color>
+    <color name="quotatrail_primary">#1A1C1E</color>
+    <color name="quotatrail_surface">#FFFCF6</color>
+    <color name="quotatrail_background">#F4F1EA</color>
+    <color name="quotatrail_accent">#3154D5</color>
+    <color name="quotatrail_background_dark">#111216</color>
+    <color name="ic_launcher_background">#3154D5</color>
 </resources>

@@ -1,4 +1,4 @@
-# CodexMeter MVP QA Notes
+# QuotaTrail MVP QA Notes
 
 Date: 2026-05-28
 
@@ -8,7 +8,7 @@ This section supersedes the 2026-05-24 pre-migration QA notes that covered embed
 
 Current UI expectations:
 
-- Home no-account state shows `CodexMeter`, `连接 Codex` / `Connect Codex`, and `登录 Codex` / `Log in to Codex`; it does not show an `auth.json` import action.
+- Home no-account state shows `QuotaTrail`, `连接 Codex` / `Connect Codex`, and `登录 Codex` / `Log in to Codex`; it does not show an `auth.json` import action.
 - Add Account exposes only the Codex device-code sign-in flow, with code display, copy, external verification-page open, cancellation and validation retry.
 - Home signed-in state shows the current-account glass summary, 5h quota, weekly quota, rounded hourly trend bars and refresh status.
 - Account tab is the only account-management surface: add, set current, rename, relogin, delete, and per-account quota alert switches.
@@ -40,7 +40,7 @@ Date: 2026-05-28
 Device:
 
 - Android emulator: `emulator-5554`
-- Debug package: `com.kmnexus.codexmeter.debug`
+- Debug package: `app.quotatrail.debug`
 - Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 Mock accounts used:

@@ -1,8 +1,8 @@
-# CodexMeter Development Rules
+# QuotaTrail Development Rules
 
 ## 1. 文档定位
 
-本文是 `CodexMeter` 的开发规则与长期维护护栏。
+本文是 `QuotaTrail` 的开发规则与长期维护护栏。
 
 所有后续开发、重构、修 bug、生成代码、让 Agent 接手任务前，都必须先读：
 
@@ -21,7 +21,7 @@
 
 ## 2. 核心目标
 
-CodexMeter 的代码必须长期可维护、易于人工接手、便于小步迭代。
+QuotaTrail 的代码必须长期可维护、易于人工接手、便于小步迭代。
 
 开发目标不是“先跑起来再说”，而是：
 
@@ -61,7 +61,7 @@ MVP 是单模块 Android app，但包内必须严格分层。
 基准包结构以 `docs/ARCHITECTURE.md` 为准：
 
 ```text
-com.kmnexus.codexmeter
+app.quotatrail
 ├── app
 ├── core
 ├── data
@@ -81,7 +81,7 @@ com.kmnexus.codexmeter
 - `ui` → ViewModel / UI state
 - `widget` → widget state / domain read model
 - `notification` → notification state / alert policy
-- `worker` → `RefreshCoordinator`
+- `worker` → `UsageSyncCoordinator`
 - `data` → Room / DataStore / SecureSessionStore
 - `providers` → provider DTO / network / private session payload
 - `domain` → 通用模型和接口
@@ -151,7 +151,7 @@ com.kmnexus.codexmeter
 
 更好的命名方式：
 
-- `RefreshCoordinator`，而不是 `RefreshManager`
+- `UsageSyncCoordinator`，而不是 `RefreshManager`
 - `AlertPolicy`，而不是 `AlertHelper`
 - `CodexUsageMapper`，而不是 `CodexUtils`
 - `SecureSessionStore`，而不是 `TokenManager`
@@ -223,7 +223,7 @@ isLoading = true
 TODO 格式：
 
 ```kotlin
-// TODO(codexmeter): Replace with provider-specific migration when Claude provider is added.
+// TODO(quotatrail): Replace with provider-specific migration when Claude provider is added.
 // Reason: MVP only has Codex, but the envelope schema already carries providerId.
 ```
 
@@ -409,7 +409,7 @@ DataStore 禁止保存任何 session 明文。
 - 统一通过 `ProviderHttpClient`。
 - 不在 UI、Widget、Notification、Worker 里直接 new OkHttp client。
 - 默认 timeout 必须明确。
-- User-Agent 使用 `CodexMeter/<version>`。
+- User-Agent 使用 `QuotaTrail/<version>`。
 - Authorization、Cookie、token 类 header 必须脱敏。
 - Release build 不打印 request / response body。
 - DTO 解析失败必须返回结构化错误。
@@ -418,7 +418,7 @@ DataStore 禁止保存任何 session 明文。
 
 ## 13. 刷新与并发规则
 
-- 所有刷新入口必须进入 `RefreshCoordinator`。
+- 所有刷新入口必须进入 `UsageSyncCoordinator`。
 - 同一 `(providerId, accountId)` 必须 single-flight。
 - WorkManager 使用 unique work 防止任务堆积。
 - token refresh 必须串行。
@@ -437,13 +437,13 @@ DataStore 禁止保存任何 session 明文。
 - Widget 不直接查 Provider。
 - Widget 不直接解密 session。
 - Widget 内部不做账号切换。
-- Widget 不做内部按钮。
-- Widget 点击只打开 App 对应入口。
-- 配置指定的非当前账号只能读取本地最新快照，不得启动多账号并行后台刷新。
+- Widget 只允许一个紧凑刷新按钮；按钮只能通过 `WorkManager` 请求该 Widget 当前展示账号的刷新，不能直接联网、查 Provider 或解密 session。
+- Widget 刷新按钮以外的区域点击只打开 App 对应入口；刷新按钮不得启动 App UI。
+- 配置指定的非当前账号可以定向刷新该账号，但不得因此启动其它账号的多账号并行刷新。
 
 ## 15. 通知与告警规则
 
-- 通知由 `NotificationOrchestrator` 统一管理。
+- 通知由 `NotificationCoordinator` 统一管理。
 - 告警由 `AlertPolicy` 判断。
 - 去重由 `AlertStateStore` 负责。
 - Worker 和 Repository 不直接发通知。
@@ -521,7 +521,7 @@ DataStore 禁止保存任何 session 明文。
 - token exchange / refresh 错误映射。
 - session envelope 迁移。
 - `QuotaError` 映射。
-- `RefreshCoordinator` 降级逻辑。
+- `UsageSyncCoordinator` 降级逻辑。
 - last known good 保护。
 - `AlertPolicy`。
 - redaction / diagnostics。
@@ -718,4 +718,4 @@ Agent 输出原则：
 - 错误说明下一步。
 - 文档说明决策。
 
-CodexMeter 是小工具，但不能用小工具当借口写一次性屎山。
+QuotaTrail 是小工具，但不能用小工具当借口写一次性屎山。

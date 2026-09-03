@@ -1,14 +1,14 @@
 <resources>
-    <style name="Theme.CodexMeter" parent="@android:style/Theme.Material.NoActionBar">
-        <item name="android:colorAccent">@color/codexmeter_accent</item>
-        <item name="android:navigationBarColor">@color/codexmeter_background_dark</item>
-        <item name="android:statusBarColor">@color/codexmeter_background_dark</item>
+    <style name="Theme.QuotaTrail" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorAccent">@color/quotatrail_accent</item>
+        <item name="android:navigationBarColor">@color/quotatrail_background_dark</item>
+        <item name="android:statusBarColor">@color/quotatrail_background_dark</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowNoTitle">true</item>
     </style>
-    <style name="Theme.CodexMeter.WidgetConfigurationDialog" parent="@android:style/Theme.Material.Dialog.NoActionBar">
-        <item name="android:colorAccent">@color/codexmeter_accent</item>
+    <style name="Theme.QuotaTrail.WidgetConfigurationDialog" parent="@android:style/Theme.Material.Dialog.NoActionBar">
+        <item name="android:colorAccent">@color/quotatrail_accent</item>
         <item name="android:windowIsFloating">true</item>
         <item name="android:windowCloseOnTouchOutside">true</item>
         <item name="android:backgroundDimEnabled">true</item>

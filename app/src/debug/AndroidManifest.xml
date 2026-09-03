@@ -1,17 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <activity
-            android:name=".ui.home.HomePreviewActivity"
+            android:name=".presentation.home.HomePreviewActivity"
             android:exported="true"
             android:label="Home Preview"
-            android:theme="@style/Theme.CodexMeter" />
+            android:theme="@style/Theme.QuotaTrail" />
         <activity
-            android:name=".ui.spike.MotionPreviewActivity"
+            android:name=".presentation.spike.MotionPreviewActivity"
             android:exported="true"
             android:label="Motion Preview"
-            android:theme="@style/Theme.CodexMeter" />
+            android:theme="@style/Theme.QuotaTrail" />
         <activity
-            android:name=".widget.WidgetPreviewActivity"
+            android:name=".surfaces.widget.WidgetPreviewActivity"
             android:exported="true"
             android:label="Widget Preview"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />

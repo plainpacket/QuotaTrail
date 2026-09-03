@@ -1,17 +1,17 @@
-# CodexMeter Architecture
+# QuotaTrail Architecture
 
 ## 1. 文档定位
 
-本文是 `CodexMeter` MVP 的可执行开发蓝图，用于固化 Android 架构、数据模型、认证链路、刷新链路、安全边界和后续扩展约束。
+本文是 `QuotaTrail` MVP 的可执行开发蓝图，用于固化 Android 架构、数据模型、认证链路、刷新链路、安全边界和后续扩展约束。
 
 本文不展开完整代码实现，不描述 UI 视觉细节。视觉与交互细节放在根目录 `DESIGN.md`，开发规范放在根目录 `RULES.md`。
 
 ## 2. 已确认产品边界
 
 - 项目目录：`codexbar-apk`
-- 产品展示名：`CodexMeter`
-- 正式包名：`com.kmnexus.codexmeter`
-- debug 包名：`com.kmnexus.codexmeter.debug`
+- 产品展示名：`QuotaTrail`
+- 正式包名：`app.quotatrail`
+- debug 包名：`app.quotatrail.debug`
 - 目标平台：Android 12+
 - 分发方式：自用 / 小范围侧载 APK
 - MVP 首个 Provider：Codex
@@ -27,7 +27,7 @@
 
 ## 3. 总体架构决策
 
-CodexMeter MVP 采用单模块 Android 应用架构。
+QuotaTrail MVP 采用单模块 Android 应用架构。
 
 - 只有一个 `app` module。
 - 不引入多模块拆分。
@@ -46,7 +46,7 @@ CodexMeter MVP 采用单模块 Android 应用架构。
 - 会话加密：Android Keystore + AES-GCM
 - 网络：OkHttp + kotlinx.serialization
 - 桌面微件：Jetpack Glance
-- 依赖组装：手写 `AppContainer`
+- 依赖组装：手写 `ApplicationGraph`
 
 ### 3.2 不采用的技术
 
@@ -66,12 +66,12 @@ MVP 不采用：
 当前实现包结构：
 
 ```text
-com.kmnexus.codexmeter
-├── app
-├── core
+app.quotatrail
+├── application
+├── foundation
 │   ├── i18n
 │   └── network
-├── data
+├── storage
 │   ├── local
 │   │   ├── dao
 │   │   ├── db
@@ -89,7 +89,6 @@ com.kmnexus.codexmeter
 │   ├── refresh
 │   ├── settings
 │   └── update
-├── notification
 ├── providers
 │   ├── ProviderRegistry.kt   (所有 Provider 注册与 ProviderConfig)
 │   ├── SessionImporter.kt    (通用接口)
@@ -109,8 +108,9 @@ com.kmnexus.codexmeter
 │   ├── antigravity / auth, dto, mapper, network, session
 │   └── common
 │       └── auth  (LoopbackCallbackServer, OAuthTokenClient)
-├── refresh
-├── ui
+├── sync
+├── delivery
+├── presentation
 │   ├── account
 │   ├── auth
 │   ├── components
@@ -120,14 +120,16 @@ com.kmnexus.codexmeter
 │   ├── settings
 │   ├── spike
 │   └── theme
-└── widget
+└── surfaces
+    ├── notification
+    └── widget
 ```
 
 约束：
 
-- `ui` 不直接访问 Room、DataStore、OkHttp、Keystore。
-- `widget` 不直接访问网络和 Provider。
-- `refresh` 中的 WorkManager glue 不直接创建通知，不直接拼 UI 状态。
+- `presentation` 不直接访问 Room、DataStore、OkHttp、Keystore。
+- `surfaces.widget` 不直接访问网络和 Provider。
+- `sync` 中的 WorkManager glue 不直接创建通知，不直接拼 UI 状态。
 - Provider 私有 token、DTO、endpoint 不外泄到公共层。
 - 公共层只消费标准化后的领域模型。
 
@@ -213,8 +215,8 @@ Codex 是第一个 Provider，但公共架构不得写死 Codex。
 
 ### 6.3 组装方式
 
-- `AppContainer` 手写组装所有 Provider 依赖。
-- 每个 Provider 的 `<Name>RefreshProvider` 实现 `RefreshProvider`，供 `RefreshCoordinator` 调用。
+- `ApplicationGraph` 手写组装所有 Provider 依赖。
+- 每个 Provider 的 `<Name>RefreshProvider` 实现 `RefreshProvider`，供 `UsageSyncCoordinator` 调用。
 - 每个 Provider 的 `<Name>SessionImporter` 实现通用 `SessionImporter` 接口，并通过 `SessionImportRouter` 按 `ProviderAuthKind` 路由。
 - Codex 特有：`CodexDeviceCodeLoginUseCase` 负责 device-code 登录状态机；`CodexDeviceCodeLoginController` 暴露 domain facade。
 - 通用 domain 层：`ApiKeyLoginUseCase` 和 `SessionLoginUseCase` 供 API Key 和 WebView/OAuth 登录使用。
@@ -312,6 +314,8 @@ Codex 私有 payload 由 Codex Provider 自己定义和迁移。
 
 `QuotaModelBucket` 包含 `modelId`、`displayName`、`remainingFraction`、`resetAt?`。
 
+`Depleted` 仍是有效且可展示的数据：百分比窗口投影为剩余 0%，并保留 `resetAt`。只有 `Missing`、`DecodeFailed`、`Unsupported` 在需要数值的 UI / Widget 选择器中被过滤。UI 不为 Provider 未返回的窗口补造数据。
+
 已知 Provider 窗口：
 
 | Provider | 窗口 id | displayKind |
@@ -374,7 +378,7 @@ UI 只消费 `displayKind` 分支渲染，不识别 Provider 私有窗口 id。
 
 ## 8. 本地存储
 
-CodexMeter 将本地数据分为三类。
+QuotaTrail 将本地数据分为三类。
 
 ### 8.1 敏感会话
 
@@ -401,7 +405,7 @@ CodexMeter 将本地数据分为三类。
 - 当前 `providerId`
 - 当前 `accountId`
 - legacy 主额度窗口，仅用于迁移旧设置；新功能不再把它作为全局默认
-- 常驻通知配置：通知账号选择、通知显示额度窗口
+- 常驻通知配置：可空的指定账号选择（空值表示每个已连接 Provider 各取一个账号）、首选显示额度窗口
 - 账号额度告警配置：每个账号的每个额度窗口是否开启告警
 - 每个 AppWidget 的轻量配置：展示账号、紧凑主额度窗口
 - 阈值设置
@@ -416,7 +420,7 @@ CodexMeter 将本地数据分为三类。
 
 应用更新检查不写入本地数据库或 DataStore：
 
-- `GitHubReleaseAppUpdateChecker` 通过 OkHttp + kotlinx.serialization 读取 `KyoMio/CodexMeter` 最新 GitHub Release。
+- `GitHubReleaseAppUpdateChecker` reads the latest `plainpacket/QuotaTrail` GitHub Release through OkHttp and kotlinx.serialization.
 - 仅比较语义版本号；debug / build suffix 不参与新旧判断。
 - 仅选择 Release assets 中的 `.apk` 下载链接。
 - 下载交给 Android `DownloadManager`，App 不自行安装 APK，不申请存储权限，不上传诊断或设备信息。
@@ -696,7 +700,7 @@ DeepSeek 支持余额明细展示：`grantedBalance`（赠送额度）和 `toppe
 职责：
 
 - 统一 timeout。
-- 统一 User-Agent：`CodexMeter/<version>`。
+- 统一 User-Agent：`QuotaTrail/<version>`。
 - 统一 HTTP 响应封装。
 - 统一基础脱敏。
 - 统一网络错误归一。
@@ -724,20 +728,22 @@ Provider 自己负责：
 
 ## 13. 刷新架构
 
-### 13.1 RefreshCoordinator
+### 13.1 UsageSyncCoordinator
 
-所有刷新入口统一进入 `RefreshCoordinator`。
+所有刷新入口统一进入 `UsageSyncCoordinator`。
 
 刷新入口包括：
 
 - WorkManager 周期刷新。
 - 手动刷新（首页下拉刷新 / 右上角刷新按钮）。
 - 登录 / 重新登录成功后刷新。
-- 切换当前账号后刷新。
+- 登录 / 重新登录成功后的初始刷新。
+
+Home 使用 `HorizontalPager` 投影所有可见 Provider 账号的 last-known-good 状态。页面 settle 后只持久化 current selection 并重新发布本地状态，不做网络调用；手动刷新针对当前可见页面。
 
 打开 App、从通知或微件进入首页只读取已持久化的 last known good 快照，不再触发网络刷新；新鲜度由手动刷新与周期后台刷新保证，以避免频繁切页造成的高频 API 调用。`RefreshTrigger.AppOpen` 仅保留作为历史快照来源标记与旧记录反序列化兼容，不再有任何入口产生它。
 
-`RefreshCoordinator` 负责：
+`UsageSyncCoordinator` 负责：
 
 - 读取当前账号。
 - 根据 `providerId` 找 Provider。
@@ -774,10 +780,10 @@ MVP 使用 WorkManager，不做 Foreground Service。
 
 约束：
 
-- 同一账号仍通过 `RefreshCoordinator` 保持 `(providerId, accountId)` single-flight。
+- 同一账号仍通过 `UsageSyncCoordinator` 保持 `(providerId, accountId)` single-flight。
 - 非 Active / 需要重新登录 / 已禁用账号不参与周期刷新。
 - 任一账号刷新成功后发布该账号的 `CurrentQuotaState` 以评估额度告警。
-- 常驻通知状态不直接使用“刚刷新完成的账号”，而是按常驻通知配置重新加载展示账号和展示窗口。
+- 常驻通知状态不直接使用“刚刷新完成的账号”，而是按常驻通知配置重新加载全部目标账号和各自的展示窗口。
 
 常驻通知只是展示最近状态，不代表前台采集服务。
 
@@ -826,8 +832,10 @@ MVP 每次成功刷新都保存原始成功快照。
 
 规则：
 
-- 趋势图读取最近 24 小时成功快照。
-- MVP 直接使用已有成功快照点，并按采集时间在 24 小时窗口内定位；不按点数均分铺满图表。
+- 整体 7-day 窗口的趋势图读取最近 72 小时成功快照，按 72 个小时槽聚合剩余百分比；同一小时多条采样取平均值。
+- `Available` 与 `Depleted` 都可进入 7-day 趋势，后者保留为 0%；失败 attempt、缺失值和无法解码的窗口不进入趋势。
+- 72 小时趋势使用固定 0–100% Y 轴和真实时间 X 轴；缺少采样的小时保留断点，不做本地估算或插值。
+- 无整体 7-day 窗口的 Provider 保留最近 24 小时消费趋势作为回退。
 - 失败 attempt 不进入趋势。
 - 根据用户设置清理旧历史：7 / 30 / 90 / 永久。
 - 默认保留 30 天。
@@ -883,21 +891,25 @@ Widget 不做：
 
 - 直接联网。
 - 微件内部账号切换。
-- 内部刷新按钮。
 - Provider 私有逻辑。
 
 允许：
 
 - 系统 AppWidget 配置 Activity 读写该 widget 的 `WidgetQuotaConfiguration`，并重新投影 `WidgetQuotaState`。
 - 账号删除时清理引用该账号的 widget 状态与配置。
+- 一个紧凑刷新按钮通过 Glance `actionSendBroadcast` 把该微件的 `localAccountId` 交给显式、非 exported 的 `WidgetRefreshReceiver`；Receiver 再调用 `SyncWorkScheduler`，本身不访问网络、Provider 或 session。
 
 点击行为：
 
-- 已登录：打开 App 首页。
+- 已登录：刷新按钮以外的区域打开 App 首页。
+- 刷新按钮：不启动 App UI；先显示 `Refreshing…` toast，再为当前展示账号安排带联网约束的 expedited 单次 `WorkManager` 工作，并在异步 BroadcastReceiver 结束前等待 enqueue 操作持久化完成。
 - 未配置 / 未登录：同样打开 App 首页，由首页无账号态承载添加账号引导。微件不再深链单一 Provider 的添加账号页（已支持多 Provider，退役了单 Provider 直达入口）。
 
 刷新触发：
 
+- 微件刷新按钮按 `localAccountId` 定向刷新，使用 `RefreshTrigger.Widget`；每个账号使用独立 unique work name 和 `ExistingWorkPolicy.KEEP`，连续点击不会堆叠工作，也不会刷新其它账号。expedited quota 不足时回退为普通单次工作，而不是丢弃用户请求。
+- Worker 完成后向应用内显式 Receiver 发送结果，显示 `Quota refreshed`、`Refresh delayed. Retrying…` 或 `Refresh failed` toast。
+- 应用覆盖安装后 `MY_PACKAGE_REPLACED` Receiver 强制重新渲染全部已放置微件，避免 launcher 继续持有旧 PendingIntent。
 - 刷新完成后更新。
 - 切换当前账号后更新。
 - 保存单个 widget 配置后更新该 widget。
@@ -906,9 +918,9 @@ Widget 不做：
 
 ## 16. 通知与告警
 
-### 16.1 NotificationOrchestrator
+### 16.1 NotificationCoordinator
 
-通知由 `NotificationOrchestrator` 统一管理。
+通知由 `NotificationCoordinator` 统一管理。
 
 负责：
 
@@ -958,10 +970,15 @@ Android 13+ 通知权限未授予时：
 
 常驻通知额外约束：
 
-- 常驻通知有自己的账号选择和显示额度窗口。
-- 默认跟随当前账号，默认显示 5小时额度。
-- 指定账号删除后回退到跟随当前账号。
-- 其它账号刷新完成不得覆盖常驻通知配置展示的账号状态。
+- 常驻通知有自己的账号选择和首选显示额度窗口。
+- 默认账号选择为空，语义为 `All connected accounts`：按 `ProviderRegistry` 顺序为每个已连接 Provider 选择一个非删除账号；同一 Provider 有多个账号时优先当前选择，否则取首个账号。
+- Safe 版本最多生成一个 ongoing 状态通知，其中 Claude 与 Codex 各占一行；折叠标题同时包含两边的 Provider 名和剩余额度。
+- 每个 Provider 行固定投影官方 5h 与 7-day 窗口；有效 / 耗尽值分别显示剩余百分比（耗尽为 0%）及各窗口官方 `resetAt`。`resetAt` 通过注入 / 系统 `ZoneId` 转为设备本地时间，使用 `Locale.ENGLISH` 的 `EEE, MMM d, HH:mm`；缺失窗口或缺失 `resetAt` 显示 `Renewal unavailable`，不得本地估算。
+- 用户指定账号后只加载该账号；指定账号失效或删除后设置层回退到 `All connected accounts`。
+- 首选窗口默认 5小时额度；目标账号没有该窗口时使用其 Provider 主窗口或首个可展示窗口，不补造缺失数据。
+- 任一账号刷新完成都会从 Room 重新投影所有目标账号，因此不会把通知错误替换成“刚刷新账号”的单账号状态。
+- 聚合通知正文和锁屏公开版本不包含账号别名、凭据或原始诊断。
+- 状态通知包含一个 `Refresh all` broadcast action。非导出的 receiver 只排入 `quota_refresh_once` 唯一 WorkManager 作业；作业等待联网并以 `RefreshTrigger.Manual` 有界并行刷新所有 manually-refreshable 账号。`ExistingWorkPolicy.KEEP` 防止重复点击堆叠。
 
 ## 17. 错误模型
 
@@ -1011,7 +1028,7 @@ UI、Widget、通知只消费 `QuotaError`，不得判断 Provider 私有异常�
 
 ## 18. 诊断与日志
 
-CodexMeter 只提供可复制脱敏诊断摘要。
+QuotaTrail 只提供可复制脱敏诊断摘要。
 
 ### 18.1 诊断摘要包含
 
@@ -1195,13 +1212,13 @@ MVP 禁用 Android Auto Backup。
 
 ### 22.1 applicationId
 
-- Release：`com.kmnexus.codexmeter`
-- Debug：`com.kmnexus.codexmeter.debug`
+- Release：`app.quotatrail`
+- Debug：`app.quotatrail.debug`
 
 ### 22.2 App 名称
 
-- Release：`CodexMeter`
-- Debug：`CodexMeter Dev`
+- Release：`QuotaTrail`
+- Debug：`QuotaTrail Dev`
 
 Debug 与 release 可并存安装。
 
@@ -1263,13 +1280,13 @@ UI、Widget、通知先使用人工验收清单。
 建议按以下顺序实现：
 
 1. 初始化 Android 项目、Gradle、包名、debug/release。
-2. 建立基础包结构、`AppContainer`、Compose 壳。
+2. 建立基础包结构、`ApplicationGraph`、Compose 壳。
 3. 建立 Room、DataStore、Keystore 加密存储。
-4. 定义 Provider 通用模型和手写 `AppContainer` 依赖组装。
+4. 定义 Provider 通用模型和手写 `ApplicationGraph` 依赖组装。
 5. 实现 Codex usage API 拉取、映射与 OAuth session refresh。
 6. 实现 Codex device-code 外部浏览器登录与 usage API 校验。
 7. 移除用户可见 `auth.json` 导入 UI / 路由，同时保留既有 encrypted OAuth session 兼容。
-8. 实现 `RefreshCoordinator`、WorkManager、single-flight。
+8. 实现 `UsageSyncCoordinator`、WorkManager、single-flight。
 9. 实现首页 `CurrentQuotaState` 展示。
 10. 实现 Jetpack Glance 中号 Widget。
 11. 实现常驻通知与告警策略。
@@ -1313,3 +1330,9 @@ UI、Widget、通知先使用人工验收清单。
 - 不导出账号数据和历史数据。
 - 不申请与功能无关的高敏权限。
 - 不在诊断和日志中泄漏 token、auth code、Cookie、原始响应。
+## Personal security build boundary
+
+`PersonalSecurityPolicy` is the production allowlist for visible providers, Claude OAuth scope, API
+hosts, and upstream-update behavior. `ProviderHttpClient` enforces the host boundary on every network
+exchange, while the notification renderer uses a separate public lock-screen version. Full threat
+model and release gates: [PERSONAL_SECURITY_BUILD.md](PERSONAL_SECURITY_BUILD.md).

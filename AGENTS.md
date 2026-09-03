@@ -1,6 +1,6 @@
-# CodexMeter Agent Guide
+# QuotaTrail Agent Guide
 
-This repository is the Android project for **CodexMeter** (`codexbar-apk`): a self-use / small-scale sideloaded Android 12+ app for monitoring AI provider quota and balance usage across multiple providers (started Codex-only; Codex remains the primary provider).
+This repository is the Android project for **QuotaTrail** (`codexbar-apk`): a self-use / small-scale sideloaded Android 12+ app for monitoring AI provider quota and balance usage across multiple providers (started Codex-only; Codex remains the primary provider).
 
 This file is the canonical operating guide for AI agents and human maintainers working in this repo. `CLAUDE.md` must stay aligned with this file.
 
@@ -20,10 +20,10 @@ If these documents conflict, stop and update the documents or ask for a decision
 
 ## 2. Product baseline
 
-- Display name: `CodexMeter`.
+- Display name: `QuotaTrail`.
 - Project directory: `codexbar-apk`.
-- Package name: `com.kmnexus.codexmeter`.
-- Debug package name: `com.kmnexus.codexmeter.debug`.
+- Package name: `app.quotatrail`.
+- Debug package name: `app.quotatrail.debug`.
 - Target platform: Android 12+.
 - Distribution: self-use / small-scale sideloaded APK.
 - MVP provider: Started Codex-only; now ships 9 providers (Codex, DeepSeek, z.ai Coding Plan, z.ai API, MiniMax, Cursor, Kimi, Claude, Antigravity) registered in ProviderRegistry.
@@ -71,7 +71,7 @@ Technology baseline:
 - OkHttp + kotlinx.serialization for network and DTO parsing.
 - WorkManager for background refresh.
 - Jetpack Glance for Widget.
-- Hand-written `AppContainer` for dependency assembly.
+- Hand-written `ApplicationGraph` for dependency assembly.
 
 MVP must not introduce:
 
@@ -88,7 +88,7 @@ MVP must not introduce:
 Follow the package map from `docs/ARCHITECTURE.md`:
 
 ```text
-com.kmnexus.codexmeter
+app.quotatrail
 ├── app
 ├── core
 ├── data
@@ -104,7 +104,7 @@ Rules:
 
 - `ui` must not directly access Room, DataStore, OkHttp, Keystore or provider-private sessions.
 - `widget` must not directly access network, providers or decrypted sessions.
-- WorkManager glue in `refresh` must go through `RefreshCoordinator` and must not directly create notifications.
+- WorkManager glue in `refresh` must go through `UsageSyncCoordinator` and must not directly create notifications.
 - Provider-private token, DTO and endpoint details must stay under `providers.<providerId>`.
 - Common UI / Widget / Notification state must derive from `CurrentQuotaState` or its clipped read models.
 
@@ -136,17 +136,17 @@ Follow `DESIGN.md`.
 
 Confirmed design direction:
 
-- Air Glass Dashboard.
-- Light premium tool style.
+- Route Dashboard.
+- Calm, precise Android utility style.
 - Restrained dashboard, not a dense analytics suite.
 - Black / white / gray + blue primary interaction.
 - Green / orange / red only for semantic status.
-- Light glass-like surface treatment, without sacrificing readability.
+- One focal tonal or glass-like surface per screen; use spacing and typography before containers.
 
 Confirmed navigation:
 
-1. Home.
-2. Account.
+1. Usage.
+2. Accounts.
 3. Settings.
 
 Important UI rules:
@@ -154,9 +154,11 @@ Important UI rules:
 - Bottom tabs must use real SVG / Vector icons.
 - Account management lives in the Account tab.
 - Settings must not duplicate account-management cards.
-- Home must not contain an ambiguous top-right action button.
+- Usage must expose a clearly labeled refresh action with a 48dp touch target.
 - Account avatars use circular solid-color initials.
-- Account switching lives in the Account tab; Home only shows the current-account summary.
+- Usage keeps the horizontal provider/account pager; Accounts owns connection, alert, rename,
+  re-authentication, and delete controls.
+- Provider quota windows use full-width rows and never truncate renewal information.
 - Last scrollable content must be able to scroll above the bottom tab bar.
 
 ## 8. Testing policy
@@ -171,7 +173,7 @@ Mandatory test-first areas:
 - token exchange / refresh error mapping.
 - session envelope migration.
 - `QuotaError` mapping.
-- `RefreshCoordinator` degraded-state behavior.
+- `UsageSyncCoordinator` degraded-state behavior.
 - last-known-good snapshot protection.
 - `AlertPolicy` and alert de-duplication.
 - redaction / diagnostics.

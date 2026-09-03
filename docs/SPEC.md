@@ -1,12 +1,12 @@
-# CodexMeter MVP Implementation Spec
+# QuotaTrail MVP Implementation Spec
 
 > **For Hermes / coding agents:** read `AGENTS.md` first. Implement this spec task-by-task with strict TDD for production logic. Do not start production code for a behavior until a failing test for that behavior exists.
 
-**Goal:** build the first Android MVP of `CodexMeter`, a self-use / small-scale sideloaded Android 12+ app for monitoring official Codex quota usage.
+**Goal:** build the first Android MVP of `QuotaTrail`, a self-use / small-scale sideloaded Android 12+ app for monitoring official Codex quota usage.
 
 **Architecture:** single-module Android app with strict package boundaries. Codex is the first provider, but domain, storage, refresh, widget, notification and diagnostics models must remain provider-aware from v1.
 
-**Tech stack:** Kotlin, Jetpack Compose, Material 3, Room, DataStore, Android Keystore AES-GCM, OkHttp, kotlinx.serialization, WorkManager, Jetpack Glance, hand-written `AppContainer`.
+**Tech stack:** Kotlin, Jetpack Compose, Material 3, Room, DataStore, Android Keystore AES-GCM, OkHttp, kotlinx.serialization, WorkManager, Jetpack Glance, hand-written `ApplicationGraph`.
 
 **Status:** implementation contract for MVP v0.1.
 
@@ -43,16 +43,16 @@ This file defines the implementation contract and work order. It does not replac
 
 The MVP must support:
 
-- Android app display name: `CodexMeter`.
-- Package: `com.kmnexus.codexmeter`.
-- Debug package: `com.kmnexus.codexmeter.debug`.
+- Android app display name: `QuotaTrail`.
+- Package: `app.quotatrail`.
+- Debug package: `app.quotatrail.debug`.
 - Android 12+ only (`minSdk = 31`).
 - Multi-provider UI: Codex, DeepSeek, z.ai Coding Plan, MiniMax, Cursor, Kimi, Claude, Antigravity, z.ai API; all providers use a shared provider-aware domain layer.
 - Hermes-aligned Codex device-code login through an external browser verification handoff, per `docs/CODEX_DEVICE_CODE_LOGIN_SPEC.md`.
 - No new user-facing `auth.json` file / full JSON import path; existing saved OAuth sessions continue to refresh normally.
 - Official usage API validation before saving a newly connected account.
-- Home dashboard with 5h quota, weekly quota, 24h trend, freshness and refresh state.
-- Account tab with current account, account switching, add account, rename and delete.
+- Swipeable Home dashboard with one page per saved Claude/Codex account, provider-reported quota windows, 72h 7-day-remaining trend, freshness and refresh state.
+- Account tab with add account, rename, re-login and delete; it does not contain a separate current-account card or `Set current` action.
 - Settings tab with persistent notification configuration, thresholds, refresh, account-error notifications, retention, data management, diagnostics, and manual GitHub Releases APK update checks.
 - Settings tab includes an appearance preference (Light / Dark / Follow System, default Follow System) that persists independently of accounts and applies immediately to the app. The home-screen widget ALWAYS follows the system theme (independent of the app preference): its glass background is a `drawable`/`drawable-night` resource and its text uses Glance `ColorProvider(day, night)`, so the launcher re-resolves them instantly on a system night-mode change with no app process involvement.
 - Resizable home-screen widget driven by persisted widget state, with optional per-widget account and compact primary-window configuration.
@@ -60,7 +60,7 @@ The MVP must support:
 - Threshold behavior uses remaining quota percent: 30/10/0 defaults; 30% only changes state color/copy; 10% and 0% may notify.
 - Notification channels: status, quota alerts, account/errors.
 - Local history retention: default 30 days, options 7/30/90/permanent.
-- Simplified Chinese and English resources, default following the system language, unsupported system languages falling back to English, and no in-app manual language override.
+- English resources for every device locale and no in-app language override.
 - Redacted diagnostics safe to copy.
 
 ### 2.2 Explicit non-goals
@@ -122,7 +122,7 @@ Create the Android project in the existing repo root:
 - `gradle/wrapper/gradle-wrapper.properties`
 - `app/build.gradle.kts`
 - `app/src/main/AndroidManifest.xml`
-- `app/src/main/java/com/kmnexus/codexmeter/MainActivity.kt`
+- `app/src/main/java/app/quotatrail/QuotaTrailActivity.kt`
 - `app/src/main/res/values/strings.xml`
 - `app/src/main/res/values-zh-rCN/strings.xml`
 - `app/src/main/res/values/colors.xml`
@@ -136,7 +136,7 @@ Create the Android project in the existing repo root:
 Required:
 
 - Single module: `:app`.
-- Namespace: `com.kmnexus.codexmeter`.
+- Namespace: `app.quotatrail`.
 - `minSdk = 31`.
 - `debug` and `release` build types only.
 - `debug` uses `applicationIdSuffix = ".debug"`.
@@ -191,7 +191,7 @@ git commit -m "chore: initialize android project skeleton"
 Use this root package:
 
 ```text
-app/src/main/java/com/kmnexus/codexmeter/
+app/src/main/java/app/quotatrail/
 ```
 
 Required package groups:
@@ -253,7 +253,7 @@ Rules:
 - `notification` consumes `CurrentQuotaState` and `AlertPolicy`; WorkManager glue in `refresh` and repositories must not directly create notifications.
 - `providers.codex` owns Codex DTOs, endpoint details, token refresh and provider-private session payload.
 - Common domain code must never reference Codex DTO classes.
-- Use `AppContainer` for dependency wiring. Do not introduce Hilt.
+- Use `ApplicationGraph` for dependency wiring. Do not introduce Hilt.
 
 ---
 
@@ -425,7 +425,7 @@ Freshness policy:
 Database name:
 
 ```text
-codexmeter.db
+quotatrail.db
 ```
 
 Required tables:
@@ -509,7 +509,7 @@ Use DataStore for non-sensitive preferences:
 - current provider id
 - current local account id
 - legacy primary quota window for migration only; new default display behavior is owned by each surface
-- persistent notification account selection: default follow-current
+- persistent notification account selection: nullable; `null` means all connected providers, while a value pins one saved account
 - persistent notification display window: default `five_hour`
 - per-account quota alert window toggles
 - threshold values are remaining-percent based: defaults `30`, `10`, `0`
@@ -562,10 +562,10 @@ Rules:
 
 ### 8.1 Current provider wiring
 
-All 9 providers are wired by hand in `AppContainer` using `ProviderRegistry`.
+All 9 providers are wired by hand in `ApplicationGraph` using `ProviderRegistry`.
 
 - `ProviderRegistry` holds a `ProviderConfig` per provider (displayName, icon, `ProviderAuthKind`, capability flags).
-- Each provider's `<Name>RefreshProvider` implements `RefreshProvider` used by `RefreshCoordinator`.
+- Each provider's `<Name>RefreshProvider` implements `RefreshProvider` used by `UsageSyncCoordinator`.
 - Each provider's `<Name>SessionImporter` implements `SessionImporter`; `SessionImportRouter` routes by `ProviderAuthKind`.
 - `ProviderSelectionSheet` is shown when the user taps "add account"; it lists all registered providers as a bottom sheet that expands from the tab bar. Selecting a provider navigates to the corresponding auth screen.
 - `auth.json` import must not be exposed; legacy saved sessions remain readable as ordinary encrypted OAuth sessions.
@@ -630,7 +630,7 @@ Headers:
 
 - `Authorization: Bearer <access_token>`
 - `Accept: application/json`
-- `User-Agent: CodexMeter/<version>`
+- `User-Agent: QuotaTrail/<version>`
 - `ChatGPT-Account-Id: <account_id>` when account id is available
 
 Rules:
@@ -748,7 +748,7 @@ Rules:
 
 ### 10.1 Refresh triggers
 
-All refreshes must go through `RefreshCoordinator`.
+All refreshes must go through `UsageSyncCoordinator`.
 
 Supported triggers:
 
@@ -771,7 +771,7 @@ Rules:
 - Token refresh serialized per account.
 - WorkManager uses unique work.
 - Background refresh interval should respect Android WorkManager limits; target around 15 minutes, not real-time.
-- Workers write refresh attempts and snapshots; notification orchestration happens through `NotificationOrchestrator`, not directly in provider/network code.
+- Workers write refresh attempts and snapshots; notification orchestration happens through `NotificationCoordinator`, not directly in provider/network code.
 
 ### 10.2 Refresh outcomes
 
@@ -875,6 +875,16 @@ Rules:
 - App must still work without notification permission.
 - Request notification permission only when enabling notifications or when first needed with rationale.
 - Status notification is optional and user-controlled.
+- The status request is ongoing and uses one notification ID.
+- With the default `All connected accounts` selection, load one non-deleted account per connected provider and show Claude and Codex together in the same notification.
+- The collapsed title includes both provider quota summaries; the expanded body contains one provider/status line per provider.
+- Every provider line contains official `5h` and `7-day` remaining percentages plus each window's official renewal date/time.
+- Render renewal in the device time zone with English `EEE, MMM d, HH:mm` copy. Render depleted windows as `0%` with their reset time; absent/unsupported windows or a missing `resetAt` use `Renewal unavailable`. Never synthesize quota or reset time.
+- A specifically selected account preserves the single-account title/body behavior.
+- The configured window is preferred for each provider; if absent, fall back to that provider's primary or first displayable window without synthesizing data.
+- Aggregate and public lock-screen content must omit account aliases. The public version may include provider names, quota, and freshness.
+- The private status notification has one `Refresh all` action. Its immutable broadcast PendingIntent targets a non-exported receiver that enqueues connected-network unique work named `quota_refresh_once`.
+- Immediate refresh work uses `RefreshTrigger.Manual`, refreshes all manually-refreshable accounts with bounded concurrency, and uses `ExistingWorkPolicy.KEEP` so repeated taps do not enqueue duplicates.
 - Notification text must come from string resources.
 - PendingIntent must use immutable flags unless mutability is required.
 - Notification content must not include account secrets or raw diagnostics.
@@ -912,32 +922,35 @@ Home states:
 
 Required visible content when authenticated:
 
-- Title `CodexMeter`.
-- Current account identity chip or compact account label.
-- 5h quota card.
-- Weekly quota card.
-- 24h compact trend.
+- Title `QuotaTrail`.
+- Visible account identity chip or compact account label.
+- Every displayable quota window returned for that account; absent provider windows are not synthesized.
+- 72h compact line chart for the overall 7-day limit's remaining percentage.
 - Refresh status and manual refresh action.
 - Widget preview / widget hint per `DESIGN.md`.
 
 Rules:
 
 - Do not add ambiguous top-right action button.
+- Horizontal swipes move between saved account pages, update the persisted current selection, and do not trigger a network refresh.
+- The page indicator identifies the provider and position. Pull-to-refresh and the refresh button operate on the visible page.
+- `Depleted` is displayable provider data: percent windows render as 0% and keep the provider reset time. `Missing`, `DecodeFailed`, and `Unsupported` remain hidden where a displayable value is required.
 - Quota cards are not clickable detail pages in MVP.
 - Status color must be paired with status text.
 - Percent text should use tabular/monospace digits.
-- 24h trend uses fixed hourly buckets in the rolling 24h window; multiple samples in one hour are averaged before drawing rounded bars.
+- The 7-day history uses 72 fixed hourly buckets in the rolling 72h window; multiple successful samples in one hour are averaged.
+- Its Y axis is fixed at 0–100% remaining and its X axis marks the last 3 days. Missing hours remain line gaps; depleted samples remain visible at 0%.
+- Providers without an overall 7-day window retain the existing 24h consumption trend fallback.
 
 ### 12.3 Account screen
 
 Required content:
 
-- Current account card.
 - Account list.
 - Add account action.
 - Rename account action.
+- Re-login action.
 - Delete account action with confirmation.
-- Current-account switching through account cards in the Account tab.
 
 Rules:
 
@@ -946,7 +959,7 @@ Rules:
 - Delete confirmation must state that session and local history are deleted.
 - Deleting current account must select another account if available, otherwise return to unauthenticated state.
 - Account screen is the only place for account management; Settings must not duplicate account cards.
-- `Set current` keeps a visible outline even when disabled for the active account.
+- Account cards do not expose `Set current`; the visible Home page controls the persisted current selection.
 - `Delete` uses the same outlined button shape as the other account actions while keeping danger-colored text.
 
 ### 12.4 Settings screen
@@ -1036,7 +1049,17 @@ Configuration:
 
 Behavior:
 
-- Tap opens app Home (or add-account flow when unauthenticated).
+- Tap outside the refresh control opens app Home (or the Home onboarding state when unauthenticated).
+- Every configured layout shows one compact, accessible refresh control. It enqueues connected,
+  unique expedited WorkManager work for the account displayed by that widget and does not open the
+  app. An explicit non-exported receiver shows `Refreshing…` immediately and waits for the enqueue
+  operation to be durably accepted before returning;
+  exhausted expedited quota falls back to ordinary one-time work rather than dropping the request.
+- The worker sends a package-scoped completion result that shows `Quota refreshed`,
+  `Refresh delayed. Retrying…`, or `Refresh failed`. Package replacement re-renders existing widgets
+  so launchers cannot retain an obsolete refresh PendingIntent.
+- Consecutive taps for the same account are deduplicated with `ExistingWorkPolicy.KEEP`; a configured
+  non-current account refresh never expands into an all-account refresh.
 - Widget reads `WidgetQuotaState` (persisted projection from `CurrentQuotaState`) and never calls network directly.
 - Non-current configured accounts use the latest local snapshot from multi-account background refresh.
 
@@ -1056,6 +1079,8 @@ Rules:
 - Widget must remain readable on light/dark launchers.
 - Widget must not show secrets or diagnostics.
 - Widget tone and status copy use the configured remaining-percent caution/warning thresholds.
+- The refresh control is hidden when no local account is available and has the accessibility label
+  `Refresh widget` when shown.
 
 ---
 
@@ -1179,15 +1204,13 @@ Clear all history:
 
 Supported languages:
 
-- Simplified Chinese.
 - English.
 
 Rules:
 
-- Default follows system.
-- Unsupported system languages fall back to English.
+- Every system locale resolves to the English resources.
 - The app does not expose an in-app manual language override.
-- Startup clears any platform app-locale override left by older builds so a previously selected language cannot keep overriding the system setting.
+- Startup clears any platform app-locale override left by older builds.
 - All user-visible UI, Widget, notification, error and diagnostics labels must be resource-backed or resolved through a localized string resolver.
 - `Codex`, `OpenAI`, `auth.json`, `OAuth`, `WebView` are not translated.
 - Tests should not rely on localized visible strings where stable test tags are possible.
@@ -1220,7 +1243,7 @@ Create local JVM tests for:
 - `QuotaErrorMapperTest`
 - `SecureSessionStoreTest`
 - `CurrentQuotaStateFactoryTest`
-- `RefreshCoordinatorTest`
+- `UsageSyncCoordinatorTest`
 - `AlertPolicyTest`
 - `DiagnosticsRedactorTest`
 - `RetentionPolicyTest`
@@ -1382,7 +1405,7 @@ git commit -m "feat: add quota state and alerts"
 Acceptance:
 
 - Home / Account / Settings bottom tabs exist in confirmed order.
-- UI follows `DESIGN.md` Air Glass Dashboard direction.
+- UI follows the `DESIGN.md` Route Dashboard direction.
 - Unauthenticated, fresh, stale, auth required and error states render.
 - Account add/device-code-login/switch/rename/delete flows are wired to ViewModels.
 - Strings are available in Chinese and English.
@@ -1390,7 +1413,7 @@ Acceptance:
 Commit:
 
 ```bash
-git commit -m "feat: build codexmeter app screens"
+git commit -m "feat: build quotatrail app screens"
 ```
 
 ### M7 — Widget
@@ -1440,7 +1463,7 @@ Acceptance:
 Commit:
 
 ```bash
-git commit -m "chore: harden codexmeter mvp"
+git commit -m "chore: harden quotatrail mvp"
 ```
 
 ---
@@ -1454,8 +1477,14 @@ MVP implementation is done only when:
 - Home, Account, Settings, Widget and notifications all derive from shared state.
 - Failed refresh never erases last-known-good quota.
 - Diagnostics are redacted by test.
-- All user-facing strings are localized in Chinese and English.
+- All user-facing strings resolve to English in every locale; there is no in-app language selector.
 - `./gradlew assembleDebug` passes.
 - `./gradlew test` or `./gradlew :app:testDebugUnitTest` passes.
 - `npx -y @google/design.md lint DESIGN.md` passes.
 - Git status is clean after final commit.
+## Personal security distribution requirements
+
+The `app.quotatrail.safe` distribution shall expose only Claude and Codex, request only
+Claude `user:profile`, reject non-allowlisted API hosts and cleartext traffic, omit upstream update
+work, redact account aliases from the public lock-screen notification, and validate widget ownership.
+See [PERSONAL_SECURITY_BUILD.md](PERSONAL_SECURITY_BUILD.md) for normative release checks.

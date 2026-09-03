@@ -5,7 +5,7 @@
 
 ## 1. 背景
 
-当前 CodexMeter 已废弃 WebView OAuth 与新的 `auth.json` 导入入口。后续登录设计调整为：
+当前 QuotaTrail 已废弃 WebView OAuth 与新的 `auth.json` 导入入口。后续登录设计调整为：
 
 - 对齐 Hermes Agent 的 OpenAI Codex device code 登录模型。
 - 移除新的 `auth.json` 导入入口与导入能力。
@@ -112,7 +112,7 @@
 
 ## 3. Hermes 对齐点
 
-CodexMeter 需要对齐 Hermes Agent 的以下行为模式：
+QuotaTrail 需要对齐 Hermes Agent 的以下行为模式：
 
 - 使用 OpenAI Codex device code 登录，而不是导入本机 `~/.codex/auth.json` 作为主路径。
 - 先请求 device/user code，再让用户在 Web 端输入 code。
@@ -347,7 +347,7 @@ AUTH_LOGIN_NOTIFICATION_ID
 
 ### 11.3 Notification 层
 
-- `NotificationOrchestrator` 统一管理登录通知。
+- `NotificationCoordinator` 统一管理登录通知。
 - Worker、Repository、Provider 不直接发通知。
 - 通知文案进入 string resources，覆盖简中与英文。
 

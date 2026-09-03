@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Build and sign a release APK for CodexMeter.
-# Signing config is read from ~/.android/codexmeter-release-keystore.properties
-# Output APK is copied to the project root as codexmeter-release-<versionName>.apk
+# Build and sign a release APK for QuotaTrail.
+# Signing config is read from ~/.android/quotatrail-release-keystore.properties
+# Output APK is copied to the project root as quotatrail-release-<versionName>.apk
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-KEYSTORE_PROPS="$HOME/.android/codexmeter-release-keystore.properties"
+KEYSTORE_PROPS="$HOME/.android/quotatrail-release-keystore.properties"
 APK_DIR="$PROJECT_ROOT/app/build/outputs/apk/release"
 
 # ── preflight ────────────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ fi
 # extract versionName from build.gradle.kts
 version=$(grep 'versionName\s*=' "$PROJECT_ROOT/app/build.gradle.kts" \
   | grep -o '"[^"]*"' | tr -d '"' | head -1)
-dest="$PROJECT_ROOT/codexmeter-release-${version}.apk"
+dest="$PROJECT_ROOT/quotatrail-release-${version}.apk"
 
 cp "$apk_path" "$dest"
 

@@ -18,5 +18,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CodexMeter"
+rootProject.name = "QuotaTrail"
 include(":app")

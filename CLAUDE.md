@@ -1,6 +1,6 @@
-# Claude Code Guide for CodexMeter
+# Claude Code Guide for QuotaTrail
 
-This file gives Claude Code / Claude-style coding agents the project-specific rules for `CodexMeter`.
+This file gives Claude Code / Claude-style coding agents the project-specific rules for `QuotaTrail`.
 
 `AGENTS.md` is the canonical agent guide. If there is a conflict, follow `AGENTS.md` and update this file to match.
 
@@ -24,9 +24,9 @@ Do not rely on memory of previous sessions. Read the repo files.
 
 ## Project summary
 
-- Product: `CodexMeter`
+- Product: `QuotaTrail`
 - Repo directory: `codexbar-apk`
-- Android package: `com.kmnexus.codexmeter`
+- Android package: `app.quotatrail`
 - Platform: Android 12+
 - MVP purpose: show AI provider quota and balance usage through app dashboard, resizable Widget and persistent notification; started Codex-only, Codex remains the primary provider.
 - MVP provider: Started Codex-only; now ships 9 providers (Codex, DeepSeek, z.ai Coding Plan, z.ai API, MiniMax, Cursor, Kimi, Claude, Antigravity) registered in ProviderRegistry.
@@ -75,7 +75,7 @@ Allowed stack:
 - OkHttp + kotlinx.serialization.
 - WorkManager.
 - Jetpack Glance.
-- Hand-written `AppContainer`.
+- Hand-written `ApplicationGraph`.
 
 Layer rules:
 
