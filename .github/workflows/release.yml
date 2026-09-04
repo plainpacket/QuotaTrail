@@ -98,7 +98,7 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "$APK"
           "${ANDROID_SDK_ROOT}/build-tools/37.0.0/apksigner" verify --verbose --print-certs "$APK" | tee signature.txt
           # Keep the public signing identity used for 1.0.0 so existing installs can update.
-          grep -Fq 'Signer #1 certificate SHA-256 digest: f81efcfde5c2cba3e7d2c45a307f2f308a60595b5aa86eed42c483fab288ed58' signature.txt
+          grep -Eq '^(Signer #[0-9]+|V[0-9.]+ Signer): certificate SHA-256 digest: f81efcfde5c2cba3e7d2c45a307f2f308a60595b5aa86eed42c483fab288ed58$' signature.txt
           "${ANDROID_SDK_ROOT}/build-tools/37.0.0/aapt" dump badging "$APK" > apk-metadata.txt
           grep -Fq "package: name='app.quotatrail'" apk-metadata.txt
           grep -Fq "versionName='${VERSION}'" apk-metadata.txt
