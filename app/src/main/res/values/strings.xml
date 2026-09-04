@@ -1,4 +1,5 @@
 <resources>
+    <string name="widget_refresh_queued">Refresh queued. Starts when network and Android allow.</string>
     <string name="widget_config_expand">+</string>
     <string name="widget_config_collapse">−</string>
     <string name="app_name">QuotaTrail</string>
@@ -385,8 +386,8 @@
     <string name="settings_diagnostics_copy">Copy diagnostics</string>
     <string name="settings_diagnostics_recheck">Recheck</string>
     <string name="settings_about_version_format">QuotaTrail %1$s</string>
-    <string name="settings_about_data_source">Quota data comes from each provider\'s official APIs.</string>
-    <string name="settings_about_privacy">Login credentials are stored locally on this device. Apart from calling official provider APIs, QuotaTrail does not include any remote-connection feature.</string>
+    <string name="settings_about_data_source">Quota data comes from provider-hosted endpoints. QuotaTrail is an unofficial integration.</string>
+    <string name="settings_about_privacy">Login credentials are encrypted and stored on this device. QuotaTrail connects directly to providers without a quota proxy, analytics, or remote logging.</string>
     <string name="settings_about_repository_label">GitHub repository</string>
     <string name="settings_about_repository_content_description">Open GitHub repository</string>
     <string name="settings_update_title">App update</string>
@@ -421,4 +422,7 @@
     <string name="notification_channel_app_updates_description">Alerts when a newer version is available</string>
     <string name="notification_app_update_title">Update available</string>
     <string name="notification_app_update_body_format">Version %1$s is available. Tap to view.</string>
+    <string name="settings_font_licenses">Font licenses</string>
+    <string name="settings_font_licenses_loading">Loading font licenses…</string>
+    <string name="settings_font_licenses_close">Close</string>
 </resources>

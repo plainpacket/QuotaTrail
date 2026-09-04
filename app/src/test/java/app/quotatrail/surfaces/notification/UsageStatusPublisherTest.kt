@@ -27,6 +27,36 @@ class UsageStatusPublisherTest {
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
     @Test
+    fun `deleting last account cancels status instead of posting stale account data`() = runTest {
+        val sink = RecordingNotificationSink()
+        val empty = app.quotatrail.domain.quota.CurrentQuotaStateFactory().create(null, null, null, now)
+        val publisher = publisher(
+            sink = sink,
+            options = NotificationRequestOptions(true, true, false, false),
+            statusNotificationStatesLoader = StatusNotificationStatesLoader { listOf(empty) },
+        )
+        publisher.publish(state(42))
+        assertEquals(listOf(1001), sink.cancelledNotificationIds)
+        assertTrue(sink.requests.isEmpty())
+    }
+
+    @Test
+    fun `deleting one provider keeps the remaining account in status`() = runTest {
+        val sink = RecordingNotificationSink()
+        val remaining = state(42, localAccountId = "remaining", displayName = "Remaining")
+        val publisher = publisher(
+            sink = sink,
+            options = NotificationRequestOptions(true, true, false, false),
+            statusNotificationStatesLoader = StatusNotificationStatesLoader { listOf(remaining) },
+        )
+        publisher.publish(state(70, localAccountId = "deleted", displayName = "Deleted"))
+        assertTrue(sink.cancelledNotificationIds.isEmpty())
+        assertEquals(1, sink.requests.size)
+        assertTrue(sink.requests.single().toString().contains("Remaining"))
+        assertTrue(!sink.requests.single().toString().contains("Deleted"))
+    }
+
+    @Test
     fun `publish posts status notification request when status is enabled`() = runTest {
         val sink = RecordingNotificationSink()
         val publisher = publisher(

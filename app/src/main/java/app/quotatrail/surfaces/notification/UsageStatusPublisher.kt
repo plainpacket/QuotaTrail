@@ -65,12 +65,17 @@ class UsageStatusPublisher(
         } else {
             listOf(state)
         }
+        val hasStatusAccount = statusStates.any { it.account != null }
+        if (!hasStatusAccount) {
+            notificationSink.cancel(NotificationCoordinator.STATUS_NOTIFICATION_ID)
+        }
         val statusRequests = orchestrator.buildRequests(
             state = statusStates.firstOrNull() ?: state,
             statusStates = statusStates,
             options = options.copy(
                 quotaAlertsEnabled = false,
                 accountErrorsEnabled = false,
+                statusNotificationEnabled = options.statusNotificationEnabled && hasStatusAccount,
             ),
         )
         val alertRequests = alertEvents.mapNotNull { event ->

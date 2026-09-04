@@ -40,7 +40,9 @@ class UsageSyncCoordinator(
         DefaultPrimaryQuotaWindowPreferenceReader,
     private val attemptIdProvider: AttemptIdProvider,
     private val clock: Clock,
+    private val accountExists: suspend (ProviderAccount) -> Boolean = { true },
 ) {
+    private val accountOperations = AccountOperationGate()
     private val inFlightMutex = Mutex()
     private val inFlight = mutableMapOf<RefreshKey, CompletableDeferred<RefreshResult>>()
     internal var beforeFlightRemoval: suspend () -> Unit = {}
@@ -66,7 +68,18 @@ class UsageSyncCoordinator(
         }
 
         try {
-            val result = executeRefresh(account = account, trigger = trigger)
+            val result = accountOperations.withAccount(account.providerId, account.localAccountId) {
+                // Account lists can have been read before a deletion completed. Never call the
+                // provider or persist an attempt for a removed account, even after process restart.
+                if (accountExists(account)) {
+                    executeRefresh(account = account, trigger = trigger)
+                } else {
+                    RefreshResult.Failure(
+                        error = QuotaError.AuthRequired(null, "refresh_account_removed"),
+                        lastKnownGood = null,
+                    )
+                }
+            }
             completeFlight(key = key, deferred = flight.deferred, result = result)
             return result
         } catch (throwable: Throwable) {
@@ -74,6 +87,13 @@ class UsageSyncCoordinator(
             throw throwable
         }
     }
+
+    /** Wait for existing refresh writes, then exclude new refreshes until mutation completes. */
+    suspend fun <T> withAccountMutation(
+        providerId: ProviderId,
+        localAccountId: LocalAccountId,
+        action: suspend () -> T,
+    ): T = accountOperations.withAccount(providerId, localAccountId, action)
 
     private suspend fun completeFlight(
         key: RefreshKey,

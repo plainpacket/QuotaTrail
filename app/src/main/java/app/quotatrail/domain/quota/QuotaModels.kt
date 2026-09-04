@@ -87,7 +87,7 @@ data class Credits(
 )
 
 internal fun QuotaWindow.canAlert(): Boolean = when {
-    availability != QuotaWindowAvailability.Available -> false
+    !hasDisplayableQuotaValue() -> false
     displayKind == QuotaWindowDisplayKind.Balance -> {
         val amount = balanceAmount?.toDoubleOrNull() ?: 0.0
         amount > 0.0

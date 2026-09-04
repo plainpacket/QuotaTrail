@@ -5,9 +5,9 @@ import app.quotatrail.domain.model.ProviderAccount
 import app.quotatrail.domain.model.ProviderId
 import app.quotatrail.domain.model.QuotaWindowId
 import app.quotatrail.domain.quota.CurrentQuotaState
-import app.quotatrail.domain.quota.QuotaWindowAvailability
 import app.quotatrail.domain.quota.QuotaWindow
 import app.quotatrail.domain.quota.QuotaWindowDisplayKind
+import app.quotatrail.domain.quota.hasDisplayableQuotaValue
 import java.time.Instant
 
 data class AlertThresholds(
@@ -84,7 +84,7 @@ class AlertPolicy {
     ): QuotaAlertEvent? {
         val account = state.account ?: return null
         if (window.windowId !in enabledWindowIds) return null
-        if (window.availability != QuotaWindowAvailability.Available) return null
+        if (!window.hasDisplayableQuotaValue()) return null
         if (window.windowId == state.primaryWindow?.windowId && !state.primaryWindowCanAlert) return null
 
         return when (window.displayKind) {

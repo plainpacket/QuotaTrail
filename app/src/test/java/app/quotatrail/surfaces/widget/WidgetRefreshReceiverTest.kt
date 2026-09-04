@@ -30,7 +30,7 @@ class WidgetRefreshReceiverTest {
             listOf(LocalAccountId("claude-local"), LocalAccountId("codex-local")),
         )
 
-        assertEquals(listOf(WidgetRefreshFeedback.Refreshing), events)
+        assertEquals(listOf(WidgetRefreshFeedback.Queued), events)
         assertEquals(listOf(LocalAccountId("claude-local"), LocalAccountId("codex-local")), accounts)
     }
 
@@ -45,7 +45,7 @@ class WidgetRefreshReceiverTest {
         handler.handle(RuntimeEnvironment.getApplication(), listOf(LocalAccountId("codex-local")))
 
         assertEquals(
-            listOf(WidgetRefreshFeedback.Refreshing, WidgetRefreshFeedback.Failed),
+            listOf(WidgetRefreshFeedback.Queued, WidgetRefreshFeedback.Failed),
             events,
         )
     }

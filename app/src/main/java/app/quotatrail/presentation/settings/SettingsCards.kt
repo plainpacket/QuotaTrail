@@ -625,6 +625,7 @@ internal fun AboutCard(
                     Text(text = stringResource(R.string.settings_about_repository_label))
                 }
             }
+            FontLicensesButton()
         }
     }
 }

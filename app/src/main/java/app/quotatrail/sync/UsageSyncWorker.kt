@@ -9,6 +9,7 @@ import app.quotatrail.domain.refresh.RefreshTrigger
 import app.quotatrail.surfaces.widget.WidgetRefreshFeedback
 import app.quotatrail.surfaces.widget.WidgetRefreshReceiver
 import kotlinx.coroutines.async
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
@@ -23,17 +24,19 @@ class UsageSyncWorker(
     workerParameters: WorkerParameters,
 ) : CoroutineWorker(appContext, workerParameters) {
     override suspend fun doWork(): Result {
-        val outcome = UsageSyncWorkerOutcome.fromDependencies(
+        val outcome = runRefreshWithFeedback(
+            showFeedback = inputData.getBoolean(KEY_SHOW_WIDGET_FEEDBACK, false),
+            feedback = { event ->
+                applicationContext.sendBroadcast(WidgetRefreshReceiver.feedbackIntent(applicationContext, event))
+            },
+        ) {
+            UsageSyncWorkerOutcome.fromDependencies(
                 provider = applicationContext as? QuotaRefreshDependenciesProvider,
                 manual = inputData.getBoolean(KEY_MANUAL_REFRESH, false),
                 targetLocalAccountIds = inputData.getStringArray(KEY_TARGET_LOCAL_ACCOUNT_IDS)
                     .orEmpty()
                     .map(::LocalAccountId)
                     .toSet(),
-            )
-        if (inputData.getBoolean(KEY_SHOW_WIDGET_FEEDBACK, false)) {
-            applicationContext.sendBroadcast(
-                WidgetRefreshReceiver.feedbackIntent(applicationContext, outcome.widgetFeedback()),
             )
         }
         return when (outcome) {
@@ -48,6 +51,24 @@ class UsageSyncWorker(
         const val KEY_TARGET_LOCAL_ACCOUNT_IDS = "target_local_account_ids"
         const val KEY_SHOW_WIDGET_FEEDBACK = "show_widget_feedback"
     }
+}
+
+internal suspend fun runRefreshWithFeedback(
+    showFeedback: Boolean,
+    feedback: (WidgetRefreshFeedback) -> Unit,
+    refresh: suspend () -> UsageSyncWorkerOutcome,
+): UsageSyncWorkerOutcome {
+    if (showFeedback) feedback(WidgetRefreshFeedback.Refreshing)
+    val outcome = try {
+        refresh()
+    } catch (exception: CancellationException) {
+        throw exception
+    } catch (_: Exception) {
+        // Unexpected local/storage failures must not leave a manual request without feedback.
+        UsageSyncWorkerOutcome.Retry
+    }
+    if (showFeedback) feedback(outcome.widgetFeedback())
+    return outcome
 }
 
 internal fun UsageSyncWorkerOutcome.widgetFeedback(): WidgetRefreshFeedback = when (this) {

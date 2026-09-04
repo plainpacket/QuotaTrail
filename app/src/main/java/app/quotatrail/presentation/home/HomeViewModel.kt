@@ -295,6 +295,10 @@ class HomeViewModel(
         val statusDescriptionResId = state.statusDescriptionResId()
         val allWindows = state.allWindows()
         val quotaCards = allWindows
+            .filterNot {
+                it.availability == QuotaWindowAvailability.Missing ||
+                    it.availability == QuotaWindowAvailability.Unsupported
+            }
             .map { it.withConvertedBalance(currencyPreferences.targetCurrency, exchangeRates) }
             .map { window -> window.toQuotaCard() }
         val effectiveRefreshing = isRefreshing || state.status == CurrentQuotaStatus.Loading

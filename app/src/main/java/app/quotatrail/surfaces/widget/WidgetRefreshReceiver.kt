@@ -11,11 +11,13 @@ import app.quotatrail.R
 import app.quotatrail.domain.model.LocalAccountId
 import app.quotatrail.sync.SyncWorkScheduler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 internal enum class WidgetRefreshFeedback(@get:StringRes val messageRes: Int) {
+    Queued(R.string.widget_refresh_queued),
     Refreshing(R.string.widget_refresh_started),
     Complete(R.string.widget_refresh_complete),
     Retrying(R.string.widget_refresh_retrying),
@@ -50,9 +52,14 @@ internal class WidgetRefreshReceiverHandler(
     private val feedbackPresenter: WidgetRefreshFeedbackPresenter = AndroidWidgetRefreshFeedbackPresenter,
 ) {
     suspend fun handle(context: Context, localAccountIds: List<LocalAccountId>) {
-        feedbackPresenter.show(context, WidgetRefreshFeedback.Refreshing)
-        runCatching { dispatcher.dispatch(context, localAccountIds) }
-            .onFailure { feedbackPresenter.show(context, WidgetRefreshFeedback.Failed) }
+        feedbackPresenter.show(context, WidgetRefreshFeedback.Queued)
+        try {
+            dispatcher.dispatch(context, localAccountIds)
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (_: Exception) {
+            feedbackPresenter.show(context, WidgetRefreshFeedback.Failed)
+        }
     }
 }
 

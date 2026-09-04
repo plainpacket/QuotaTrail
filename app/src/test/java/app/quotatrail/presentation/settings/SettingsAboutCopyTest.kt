@@ -27,9 +27,9 @@ class SettingsAboutCopyTest {
         val privacy = context.getString(R.string.settings_about_privacy)
 
         assertEquals("QuotaTrail 0.1.0", version)
-        assertEquals("Quota data comes from each provider's official APIs.", dataSource)
+        assertEquals("Quota data comes from provider-hosted endpoints. QuotaTrail is an unofficial integration.", dataSource)
         assertEquals(
-            "Login credentials are stored locally on this device. Apart from calling official provider APIs, QuotaTrail does not include any remote-connection feature.",
+            "Login credentials are encrypted and stored on this device. QuotaTrail connects directly to providers without a quota proxy, analytics, or remote logging.",
             privacy,
         )
         assertFalse(dataSource.contains("OpenAI", ignoreCase = true))
@@ -59,9 +59,9 @@ class SettingsAboutCopyTest {
         val privacy = context.getString(R.string.settings_about_privacy)
 
         assertEquals("QuotaTrail 0.1.0", version)
-        assertEquals("Quota data comes from each provider's official APIs.", dataSource)
+        assertEquals("Quota data comes from provider-hosted endpoints. QuotaTrail is an unofficial integration.", dataSource)
         assertEquals(
-            "Login credentials are stored locally on this device. Apart from calling official provider APIs, QuotaTrail does not include any remote-connection feature.",
+            "Login credentials are encrypted and stored on this device. QuotaTrail connects directly to providers without a quota proxy, analytics, or remote logging.",
             privacy,
         )
         assertFalse(dataSource.contains("OpenAI", ignoreCase = true))

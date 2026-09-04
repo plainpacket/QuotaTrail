@@ -611,6 +611,10 @@ class ApplicationGraph private constructor(
                 providerAccountDao = database.providerAccountDao(),
             )
             val refreshCoordinator = UsageSyncCoordinator(
+                accountExists = { account ->
+                    database.providerAccountDao().getById(account.localAccountId.value)
+                        ?.let { it.providerId == account.providerId.value } == true
+                },
                 provider = refreshProvider,
                 snapshotStore = RoomQuotaSnapshotStore(database.quotaSnapshotDao()),
                 attemptStore = RoomRefreshAttemptStore(database.refreshAttemptDao()),
@@ -701,12 +705,13 @@ class ApplicationGraph private constructor(
             return ApplicationGraph(
                 refreshCoordinator = refreshCoordinator,
                 accountListUseCase = accountListRepository,
-                accountDeleteUseCase = AccountDeleteUseCase { providerId, localAccountId ->
-                    accountDeletionRepository.deleteAccount(
-                        providerId = providerId,
-                        localAccountId = localAccountId,
-                    )
-                },
+                accountDeleteUseCase = CoordinatedAccountDeletion(
+                    coordinator = refreshCoordinator,
+                    delegate = AccountDeleteUseCase(accountDeletionRepository::deleteAccount),
+                    onDeleted = {
+                        currentQuotaStatePublisher.publish(currentQuotaStateRepository.loadCurrentState())
+                    },
+                ),
                 accountSwitchUseCase = accountMutationRepository,
                 accountRenameUseCase = accountMutationRepository,
                 accountQuotaAlertEvaluationRequester = AccountQuotaAlertEvaluationRequester { providerId, localAccountId, windowId ->

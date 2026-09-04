@@ -75,6 +75,12 @@ class OAuthTokenClient(
         } catch (_: IOException) {
             return Result.Failure(QuotaError.Network(diagnosticsDigest = "${diagnosticsPrefix}_${stage}_network"))
         }
+        if (response.statusCode == 400 && isInvalidGrant(response.body)) {
+            return Result.Failure(QuotaError.AuthRequired(
+                httpStatus = 400,
+                diagnosticsDigest = "${diagnosticsPrefix}_${stage}_invalid_grant",
+            ))
+        }
         return when (response.statusCode) {
             in 200..299 -> parse(response.body, stage)
             401, 403 -> Result.Failure(
@@ -87,6 +93,13 @@ class OAuthTokenClient(
                 QuotaError.Network(diagnosticsDigest = "${diagnosticsPrefix}_${stage}_http_${response.statusCode}"),
             )
         }
+    }
+
+    private fun isInvalidGrant(body: String): Boolean = try {
+        val error = (json.parseToJsonElement(body) as? JsonObject)?.get("error") as? JsonPrimitive
+        error?.isString == true && error.content == "invalid_grant"
+    } catch (_: IllegalArgumentException) {
+        false
     }
 
     internal fun parse(body: String, stage: String): Result =
