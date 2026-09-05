@@ -27,7 +27,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +37,7 @@ import app.quotatrail.presentation.components.QuotaPullToRefreshIndicator
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.quotatrail.R
 import app.quotatrail.domain.account.AccountDeleteUseCase
 import app.quotatrail.domain.account.AccountListUseCase
@@ -84,7 +84,7 @@ fun AccountRoute(
     onAddAccountClick: () -> Unit = viewModel::requestAddAccount,
     onReloginAccount: (app.quotatrail.domain.model.ProviderId, LocalAccountId, String?) -> Unit = { _, _, _ -> },
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(viewModel) {
         viewModel.loadAccounts()

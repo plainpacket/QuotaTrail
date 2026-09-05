@@ -90,7 +90,7 @@
     <string name="home_last_attempt_format">Last checked %1$s</string>
     <string name="home_loading_card_title">Loading usage</string>
     <string name="home_loading_card_description">Getting provider data.</string>
-    <string name="home_trend_placeholder_title">Recent 24 hours</string>
+    <string name="home_trend_placeholder_title">Recent 3 days</string>
     <string name="home_trend_placeholder_description">Collecting history</string>
     <string name="home_trend_weekly_title">Limit history</string>
     <string name="home_trend_weekly_description">Collecting hourly history</string>

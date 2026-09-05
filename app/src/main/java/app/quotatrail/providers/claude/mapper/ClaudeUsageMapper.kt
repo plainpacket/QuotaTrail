@@ -12,6 +12,7 @@ import app.quotatrail.domain.quota.QuotaWindowAvailability
 import app.quotatrail.domain.quota.QuotaWindowDisplayKind
 import app.quotatrail.providers.claude.dto.ClaudeUsageResponseDto
 import java.time.Instant
+import java.util.Locale
 import java.time.OffsetDateTime
 
 /**
@@ -120,7 +121,7 @@ object ClaudeUsageMapper {
             null, "" -> "$"
             else -> "$currency "
         }
-        fun money(cents: Double) = symbol + String.format("%.2f", cents / 100.0)
+        fun money(cents: Double) = symbol + String.format(Locale.US, "%.2f", cents / 100.0)
         return "${money(usedCents)} / ${money(limitCents)}"
     }
 

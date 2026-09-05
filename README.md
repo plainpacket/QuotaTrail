@@ -8,6 +8,24 @@ QuotaTrail is a small Android app that keeps Claude and Codex usage limits visib
 It reads provider-hosted usage endpoints and keeps the result on the device. The same
 account data is available in the app, an optional home-screen widget, and an ongoing notification.
 
+## Screenshots
+
+| Claude | Codex | Accounts | Widget |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/home-light.png" width="180" alt="QuotaTrail Claude dashboard in light mode" /> | <img src="docs/screenshots/home-codex-light.png" width="180" alt="QuotaTrail Codex dashboard in light mode" /> | <img src="docs/screenshots/accounts-light.png" width="180" alt="QuotaTrail accounts screen in light mode" /> | <img src="docs/screenshots/widget-phone.jpg" width="180" alt="QuotaTrail widget on an Android home screen" /> |
+
+<details>
+<summary>Dark mode</summary>
+
+<p align="center">
+  <img src="docs/screenshots/home-dark.png" width="210" alt="QuotaTrail Claude dashboard in dark mode" />
+  <img src="docs/screenshots/home-codex-dark.png" width="210" alt="QuotaTrail Codex dashboard in dark mode" />
+  <img src="docs/screenshots/accounts-dark.png" width="210" alt="QuotaTrail accounts screen in dark mode" />
+</p>
+</details>
+
+<p align="center"><sub>App previews use sample data; the widget photo contains no account identifiers.</sub></p>
+
 ## Features
 
 - Claude and Codex accounts, with multiple accounts per service.
@@ -50,6 +68,8 @@ OAuth codes, and raw provider responses are not written to logs or diagnostics.
 ## Install
 
 Download the signed APK from [GitHub Releases](https://github.com/plainpacket/QuotaTrail/releases/latest).
+Because the APK is distributed outside Google Play, Android may ask to scan or confirm it during
+the first installation. Check that the download came from this repository before continuing.
 Install updates over the existing QuotaTrail app; the signing identity is kept across releases.
 QuotaTrail is an unofficial client and is not affiliated with Anthropic or OpenAI.
 

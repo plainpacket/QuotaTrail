@@ -31,7 +31,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshotFlow
@@ -47,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.quotatrail.R
 import app.quotatrail.storage.currency.ExchangeRateReader
@@ -87,8 +87,8 @@ fun HomeRoute(
     ),
     onLoginClick: () -> Unit = {},
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val pagerUiState by viewModel.pagerUiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pagerUiState by viewModel.pagerUiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(viewModel) {
